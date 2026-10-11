@@ -54,7 +54,7 @@ export function ReviewSession({ cards }: { cards: Card[] }) {
         type="button"
         onClick={() => setFlipped((f) => !f)}
         className="card flex min-h-64 w-full flex-col items-center justify-center p-8 text-center transition-shadow hover:shadow-pop"
-        aria-label={flipped ? "Покажи въпроса" : "Покажи отговора"}
+        aria-label={flipped ? "Обърни към въпроса" : "Обърни картата"}
       >
         <span className="kicker mb-3">{flipped ? "Отговор" : "Въпрос / понятие"}</span>
         <Markdown className="max-w-none text-lg [&_p]:m-0">{flipped ? card.back : card.front}</Markdown>

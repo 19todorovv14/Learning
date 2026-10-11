@@ -36,9 +36,10 @@ const SUPERSCRIPTS: Record<string, string> = { "⁰": "0", "¹": "1", "²": "2",
 
 /** Нормализира свободен текст за сравнение. */
 export function normalizeText(s: string): string {
+  // Горните индекси се заменят преди NFKC, иначе „²“ става просто „2“
   return s
-    .normalize("NFKC")
     .replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g, (c) => "^" + SUPERSCRIPTS[c])
+    .normalize("NFKC")
     .toLowerCase()
     .replace(/\$/g, "")
     .replace(/\\cdot|\\times|·|×/g, "*")
