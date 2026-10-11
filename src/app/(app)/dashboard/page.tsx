@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { daysAgo } from "@/lib/time";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight, CalendarClock, Flame, Layers, PlayCircle, Sparkles, Target, TrendingDown } from "lucide-react";
@@ -47,7 +48,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     getRecommendedLessons(user.id),
     getWeeklyActivity(user.id),
     db.reviewState.count({ where: { userId: user.id, dueAt: { lte: new Date() } } }),
-    db.userExam.findMany({ where: { userId: user.id, date: { gte: new Date(Date.now() - 86400000) } }, orderBy: { date: "asc" }, take: 4 }),
+    db.userExam.findMany({ where: { userId: user.id, date: { gte: daysAgo(1) } }, orderBy: { date: "asc" }, take: 4 }),
     db.assessmentAttempt.findMany({
       where: { userId: user.id, submittedAt: { not: null } },
       orderBy: { submittedAt: "desc" },

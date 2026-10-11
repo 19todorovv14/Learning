@@ -88,7 +88,7 @@ export async function startAttempt(input: StartInput) {
 export async function loadQuestionsForGrading(ids: string[]) {
   const qs = await db.question.findMany({
     where: { id: { in: ids } },
-    include: { options: { orderBy: { order: "asc" } } },
+    include: { options: { orderBy: { order: "asc" } }, driving: { select: { questionId: true } } },
   });
   const map = new Map(qs.map((q) => [q.id, q]));
   return ids.map((id) => map.get(id)).filter((q): q is NonNullable<typeof q> => !!q);
@@ -105,6 +105,7 @@ export function toGradable(q: Awaited<ReturnType<typeof loadQuestionsForGrading>
     numericTolerance: q.numericTolerance,
     matchingPairs: (q.matchingPairs as { left: string; right: string }[] | null) ?? null,
     rubric: q.rubric,
+    strict: !!q.driving,
   };
 }
 

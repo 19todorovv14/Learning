@@ -94,3 +94,22 @@
   organization: "БАН"
   url: "https://www.bas.bg/"
   type: REFERENCE
+- key: iaaa-metodika
+  title: "Методика за провеждане на изпитите за придобиване на правоспособност за управление на МПС (проект, 2024)"
+  organization: "Изпълнителна агенция „Автомобилна администрация“"
+  url: "https://www.rta.government.bg/upload/13306/Metodika_izpiti.pdf"
+  type: DRIVING_OFFICIAL
+  verified: "2026-10-11"
+  note: "Документът е публикуван с надпис „Проект!“. Съдържа формата на теоретичните изпити и разпределението на въпросите по раздели."
+- key: iaaa-metodika-2013
+  title: "Методика за провеждане на изпитите за придобиване на правоспособност за управление на МПС (2013, изм. 2014)"
+  organization: "Изпълнителна агенция „Автомобилна администрация“"
+  url: "https://www.rta.government.bg/upload/646/metodikavb.pdf"
+  type: DRIVING_OFFICIAL
+  verified: "2026-10-11"
+- key: nacid-rvu
+  title: "Регистър на висшите училища — публичен регистър на специалностите"
+  organization: "НАЦИД"
+  url: "https://rvu.nacid.bg/"
+  type: REGISTER
+  verified: "2026-10-11"

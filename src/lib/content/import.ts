@@ -1,7 +1,6 @@
-import { createHash } from "node:crypto";
 import type { PrismaClient } from "@/generated/prisma/client";
 import type { ContentBundle } from "./load";
-import type { ParsedLesson } from "./types";
+import { saveParsedLesson } from "./save-lesson";
 
 export const EDUCATION_LEVELS = [
   { id: "primary", name: "Начален етап (1.–4. клас)", order: 1, grades: [1, 2, 3, 4] },
@@ -20,23 +19,6 @@ export type ImportReport = {
   lessonsSkipped: string[];
   warnings: string[];
 };
-
-function sha(s: string) {
-  return createHash("sha256").update(s).digest("hex");
-}
-
-function lessonSnapshot(l: ParsedLesson) {
-  return JSON.parse(
-    JSON.stringify({
-      meta: l.meta,
-      sections: l.sections,
-      terms: l.terms,
-      qa: l.qa,
-      exercises: l.exercises,
-      questions: l.questions,
-    }),
-  );
-}
 
 export async function importContent(
   db: PrismaClient,
@@ -188,189 +170,19 @@ export async function importContent(
   }
 
   // 5. Уроци
-  const curriculaBySlug = new Map(bundle.curricula.map((c) => [c.slug, c]));
   for (const l of bundle.lessons) {
-    const c = curriculaBySlug.get(l.meta.curriculum);
-    const cvId = curriculumIds.get(l.meta.curriculum);
-    const subjectId = c ? subjectIds.get(c.subject) : undefined;
-    if (!c || !cvId || !subjectId) continue;
-    const contentHash = sha(l.raw);
-    const existing = await db.lesson.findUnique({ where: { slug: l.slug } });
-    const topicKey = `${c.slug}|${l.meta.topic}`;
-
-    if (existing && existing.contentHash === contentHash && !opts.force) {
-      report.lessonsUnchanged++;
-      await linkTopics(db, existing.id, l, topicIds);
-      continue;
+    try {
+      const r = await saveParsedLesson(db, l, l.raw, { source: "import", force: opts.force });
+      if (r === "created") report.lessonsCreated++;
+      else if (r === "updated") report.lessonsUpdated++;
+      else if (r === "unchanged") report.lessonsUnchanged++;
+      else report.lessonsSkipped.push(`${l.file} (редактиран в админ панела — използвайте --force)`);
+      if (r === "created" || r === "updated") log(`${r === "created" ? "създаден" : "обновен"}: ${l.slug}`);
+    } catch (e) {
+      report.warnings.push(`${l.file}: ${(e as Error).message}`);
     }
-    if (existing?.editedInAdminAt && existing.importedAt && existing.editedInAdminAt > existing.importedAt && !opts.force) {
-      report.lessonsSkipped.push(`${l.file} (редактиран в админ панела — използвайте --force)`);
-      continue;
-    }
-
-    const sectionIdx = c.sections.findIndex((s) => s.topics.includes(l.meta.topic));
-    const topicIdx = c.sections[sectionIdx]?.topics.indexOf(l.meta.topic) ?? 0;
-    const order = sectionIdx * 10000 + topicIdx * 100 + l.meta.order;
-    const searchKeywords = [...new Set([...l.meta.keywords, ...l.terms.map((t) => t.term.replace(/[*_$\\]/g, ""))])];
-
-    const lessonData = {
-      title: l.meta.title,
-      subjectId,
-      gradeId: c.grade ?? null,
-      curriculumVersionId: cvId,
-      sectionId: topicSection.get(topicKey) ?? null,
-      order,
-      summary: l.meta.summary ?? null,
-      objectives: l.meta.objectives,
-      prerequisites: l.meta.prerequisites,
-      keywords: searchKeywords,
-      estimatedMinutes: l.meta.minutes,
-      status: l.meta.status,
-      origin: l.meta.origin,
-      isDemo: l.meta.demo,
-      authorName: l.meta.author ?? null,
-      contentHash,
-      sourceFile: l.file,
-      importedAt: new Date(),
-      publishedAt: ["PUBLISHED", "VERIFIED", "PENDING_REVIEW", "AI_GENERATED"].includes(l.meta.status)
-        ? (existing?.publishedAt ?? new Date())
-        : null,
-    };
-
-    await db.$transaction(
-      async (tx) => {
-        const lesson = existing
-          ? await tx.lesson.update({ where: { id: existing.id }, data: { ...lessonData, version: { increment: 1 } } })
-          : await tx.lesson.create({ data: { slug: l.slug, ...lessonData } });
-
-        await tx.lessonSection.deleteMany({ where: { lessonId: lesson.id } });
-        if (l.sections.length)
-          await tx.lessonSection.createMany({
-            data: l.sections.map((s) => ({ lessonId: lesson.id, kind: s.kind, title: s.title, body: s.body, order: s.order })),
-          });
-
-        await tx.lessonQA.deleteMany({ where: { lessonId: lesson.id } });
-        if (l.qa.length)
-          await tx.lessonQA.createMany({
-            data: l.qa.map((q, i) => ({ lessonId: lesson.id, question: q.question, answer: q.answer, order: i })),
-          });
-
-        await tx.exercise.deleteMany({ where: { lessonId: lesson.id } });
-        if (l.exercises.length)
-          await tx.exercise.createMany({
-            data: l.exercises.map((e, i) => ({
-              lessonId: lesson.id,
-              prompt: e.prompt,
-              hint: e.hint ?? null,
-              solution: e.solution,
-              difficulty: e.difficulty,
-              order: i,
-            })),
-          });
-
-        // Термини: обновяване на място, за да се запази прогресът по флашкартите
-        const oldTerms = await tx.lessonTerm.findMany({ where: { lessonId: lesson.id }, orderBy: { order: "asc" } });
-        for (const [i, t] of l.terms.entries()) {
-          const prev = oldTerms.find((o) => o.order === i);
-          const term = prev
-            ? await tx.lessonTerm.update({ where: { id: prev.id }, data: { term: t.term, definition: t.definition } })
-            : await tx.lessonTerm.create({ data: { lessonId: lesson.id, term: t.term, definition: t.definition, order: i } });
-          await tx.flashcard.upsert({
-            where: { termId: term.id },
-            create: { termId: term.id, lessonId: lesson.id, front: t.term, back: t.definition, source: "LESSON_TERM" },
-            update: { front: t.term, back: t.definition, lessonId: lesson.id },
-          });
-        }
-        const extraTerms = oldTerms.filter((o) => o.order >= l.terms.length).map((o) => o.id);
-        if (extraTerms.length) await tx.lessonTerm.deleteMany({ where: { id: { in: extraTerms } } });
-
-        // Въпроси: стабилни ключове, за да се запази историята на отговорите
-        const keepKeys: string[] = [];
-        for (const [i, q] of l.questions.entries()) {
-          const externalKey = `${l.slug}#q${i + 1}`;
-          keepKeys.push(externalKey);
-          const qData = {
-            lessonId: lesson.id,
-            curriculumVersionId: cvId,
-            type: q.type,
-            prompt: q.prompt,
-            explanation: q.explanation ?? null,
-            acceptedAnswers: q.acceptedAnswers,
-            numericAnswer: q.numericAnswer ?? null,
-            numericTolerance: q.numericTolerance ?? null,
-            matchingPairs: q.matchingPairs ?? undefined,
-            rubric: q.rubric,
-            modelAnswer: q.modelAnswer ?? null,
-            difficulty: q.difficulty,
-            points: q.points,
-            origin: "AUTHORED" as const,
-            status: l.meta.status,
-            order: i,
-          };
-          const question = await tx.question.upsert({
-            where: { externalKey },
-            create: { externalKey, ...qData },
-            update: qData,
-          });
-          const oldOpts = await tx.answerOption.findMany({ where: { questionId: question.id } });
-          for (const [oi, o] of q.options.entries()) {
-            const prev = oldOpts.find((x) => x.order === oi);
-            if (prev) await tx.answerOption.update({ where: { id: prev.id }, data: { text: o.text, isCorrect: o.isCorrect } });
-            else await tx.answerOption.create({ data: { questionId: question.id, text: o.text, isCorrect: o.isCorrect, order: oi } });
-          }
-          const extraOpts = oldOpts.filter((x) => x.order >= q.options.length).map((x) => x.id);
-          if (extraOpts.length) await tx.answerOption.deleteMany({ where: { id: { in: extraOpts } } });
-
-          if (c.track === "DRIVING") {
-            const topic = await tx.drivingTopic.findUnique({ where: { slug: `${c.slug}-${sectionIdx + 1}` } });
-            if (topic) {
-              await tx.drivingQuestion.upsert({
-                where: { questionId: question.id },
-                create: { questionId: question.id, topicId: topic.id, categoryCodes: c.drivingCategory ? [c.drivingCategory] : [] },
-                update: { topicId: topic.id, categoryCodes: c.drivingCategory ? [c.drivingCategory] : [] },
-              });
-            }
-          }
-        }
-        await tx.question.deleteMany({ where: { lessonId: lesson.id, externalKey: { notIn: keepKeys } } });
-
-        await tx.lessonSource.deleteMany({ where: { lessonId: lesson.id } });
-        const srcIds = l.meta.sources.map((k) => sourceIds.get(k)).filter((x): x is string => !!x);
-        if (srcIds.length)
-          await tx.lessonSource.createMany({ data: srcIds.map((sourceId) => ({ lessonId: lesson.id, sourceId })) });
-
-        await tx.lessonRevision.create({
-          data: {
-            lessonId: lesson.id,
-            version: lesson.version,
-            snapshot: lessonSnapshot(l),
-            changeNote: existing ? `Импорт от ${l.file}` : `Първоначален импорт от ${l.file}`,
-          },
-        });
-
-        if (existing) report.lessonsUpdated++;
-        else report.lessonsCreated++;
-        log(`${existing ? "обновен" : "създаден"}: ${l.slug}`);
-        return lesson;
-      },
-      { timeout: 60_000 },
-    );
-    const saved = await db.lesson.findUniqueOrThrow({ where: { slug: l.slug } });
-    await linkTopics(db, saved.id, l, topicIds);
   }
 
   return report;
 }
 
-async function linkTopics(db: PrismaClient, lessonId: string, l: ParsedLesson, topicIds: Map<string, string>) {
-  const keys = [`${l.meta.curriculum}|${l.meta.topic}`, ...l.meta.also];
-  const ids = keys.map((k) => topicIds.get(k)).filter((x): x is string => !!x);
-  await db.topicLesson.deleteMany({ where: { lessonId, topicId: { notIn: ids } } });
-  for (const topicId of ids) {
-    await db.topicLesson.upsert({
-      where: { topicId_lessonId: { topicId, lessonId } },
-      create: { topicId, lessonId },
-      update: {},
-    });
-  }
-}

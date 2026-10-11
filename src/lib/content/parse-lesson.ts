@@ -272,7 +272,6 @@ function parseQuiz(text: string, problems: string[]): ParsedQuestion[] {
 }
 
 // Контролни символи, които обикновено идват от сгрешено екраниране в YAML (напр. "\frac" → form feed)
-// eslint-disable-next-line no-control-regex
 const CONTROL_RE = /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/;
 
 function checkControlChars(value: unknown, path: string, problems: string[]) {

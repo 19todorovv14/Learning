@@ -29,12 +29,12 @@ export async function sendEmail(mail: Mail) {
     await t.sendMail({ from: process.env.SMTP_FROM || "BG LEARN <no-reply@localhost>", ...mail });
     return;
   }
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.NODE_ENV === "production" && process.env.EMAIL_DEV_OUTBOX !== "true") {
     // В production без SMTP не можем да изпратим писмо — не записваме токени никъде.
     console.error("[email] SMTP не е конфигуриран — писмото не е изпратено:", mail.subject);
     return;
   }
-  // Development: писмата се показват в /dev/mailbox
+  // Development (или EMAIL_DEV_OUTBOX=true за тестова среда): писмата се показват в /dev/mailbox
   await db.devEmail.create({ data: mail });
   console.info(`[email:dev] → ${mail.to}: ${mail.subject}\n${mail.text}`);
 }

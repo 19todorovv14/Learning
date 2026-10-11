@@ -12,7 +12,11 @@ const nextConfig: NextConfig = {
   // класическия динамичен модел вместо Cache Components.
   cacheComponents: false,
   poweredByHeader: false,
-  serverExternalPackages: ["@node-rs/argon2", "pg"],
+  serverExternalPackages: ["@node-rs/argon2", "pg", "unpdf", "mammoth"],
+  experimental: {
+    // Импорт на документи в админ панела (PDF/DOCX/CSV/JSON до 10 MB)
+    serverActions: { bodySizeLimit: "12mb" },
+  },
   turbopack: {
     rules: {
       "*.css": {

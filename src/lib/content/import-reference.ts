@@ -46,7 +46,7 @@ function typeFromName(name: string): HigherEdType {
   return "SPECIALIZED_HIGHER_SCHOOL";
 }
 
-export async function importUniversities(db: PrismaClient, root: string, log = (_: string) => {}) {
+export async function importUniversities(db: PrismaClient, root: string, log: (msg: string) => void = () => {}) {
   const data = JSON.parse(readFileSync(join(root, "universities/nacid-register.json"), "utf8")) as NacidData;
   const meta = parseYaml(readFileSync(join(root, "universities/universities.yaml"), "utf8")) as UniMeta[];
   const metaByName = new Map(meta.map((m) => [m.name, m]));
@@ -184,7 +184,7 @@ type Sppoo2003 = {
   specialties: { code: string; name: string; profession: string; degree: number | null; newProfession: string | null }[];
 };
 
-export async function importVocational(db: PrismaClient, root: string, log = (_: string) => {}) {
+export async function importVocational(db: PrismaClient, root: string, log: (msg: string) => void = () => {}) {
   const v24 = JSON.parse(readFileSync(join(root, "vocational/sppoo-2024.json"), "utf8")) as Sppoo2024;
   const v03 = JSON.parse(readFileSync(join(root, "vocational/sppoo-2003.json"), "utf8")) as Sppoo2003;
 

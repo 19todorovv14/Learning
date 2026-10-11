@@ -12,6 +12,8 @@ export type QuestionForGrading = {
   numericTolerance: number | null;
   matchingPairs: { left: string; right: string }[] | null;
   rubric: string[];
+  /** Всичко или нищо при няколко верни отговора (както на изпита на ИААА) */
+  strict?: boolean;
 };
 
 export type QuizResponse = {
@@ -116,7 +118,7 @@ export function gradeQuestion(q: QuestionForGrading, r: QuizResponse | undefined
       const wrong = q.options.filter((o) => !o.isCorrect && sel.has(o.id)).length;
       const exact = right === correct.length && wrong === 0;
       // Частични точки: (верни − грешни) / всички верни, но не под 0
-      const ratio = correct.length ? Math.max(0, (right - wrong) / correct.length) : 0;
+      const ratio = q.strict ? (exact ? 1 : 0) : correct.length ? Math.max(0, (right - wrong) / correct.length) : 0;
       return { isCorrect: exact, pointsAwarded: round2(max * ratio), maxPoints: max, gradedBy: "AUTO" };
     }
     case "FILL_BLANK":
