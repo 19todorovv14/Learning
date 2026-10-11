@@ -1,0 +1,26 @@
+slug: italianski-a1-b1
+title: "Италиански език · A1–B1"
+track: LANGUAGE
+subject: italianski-ezik
+variant: "A1–B1"
+description: "Граматика и лексика по италиански от нулата до B1."
+note: "Ориентировъчна структура по нива от Общата европейска езикова рамка (CEFR). Съобразете с учебника и класа си."
+source: mon
+order: 59
+sections:
+  - title: "A1"
+    topics:
+      - "Pronuncia"
+      - "Articoli e genere"
+      - "Essere e avere"
+      - "Presente indicativo"
+  - title: "A2"
+    topics:
+      - "Passato prossimo"
+      - "Preposizioni articolate"
+      - "Pronomi diretti"
+  - title: "B1"
+    topics:
+      - "Imperfetto"
+      - "Futuro semplice"
+      - "Condizionale"

@@ -1,0 +1,34 @@
+slug: angliyski-b1
+title: "Английски език · B1 (8.–10. клас)"
+track: LANGUAGE
+subject: angliyski-ezik
+variant: "B1"
+description: "Present Perfect, условни изречения, страдателен залог, непряка реч."
+note: "Ориентировъчна структура по нива от Общата европейска езикова рамка (CEFR). Съобразете с учебника и класа си."
+source: mon
+order: 52
+sections:
+  - title: "Tenses"
+    topics:
+      - "Present Perfect vs Past Simple"
+      - "Present Perfect Continuous"
+      - "Past Perfect"
+      - "Future forms — overview"
+  - title: "Structures"
+    topics:
+      - "Zero, first and second conditionals"
+      - "The passive voice"
+      - "Reported speech"
+      - "Relative clauses"
+      - "Gerunds and infinitives"
+      - "Used to / would"
+  - title: "Vocabulary"
+    topics:
+      - "Phrasal verbs — common"
+      - "Word formation"
+      - "Collocations"
+  - title: "Skills"
+    topics:
+      - "Writing an opinion essay"
+      - "Formal and informal letters"
+      - "Speaking — giving opinions"

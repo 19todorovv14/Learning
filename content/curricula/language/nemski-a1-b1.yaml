@@ -1,0 +1,34 @@
+slug: nemski-a1-b1
+title: "Немски език · A1–B1"
+track: LANGUAGE
+subject: nemski-ezik
+variant: "A1–B1"
+description: "Граматика и лексика по немски от нулата до B1."
+note: "Ориентировъчна структура по нива от Общата европейска езикова рамка (CEFR). Съобразете с учебника и класа си."
+source: mon
+order: 55
+sections:
+  - title: "A1"
+    topics:
+      - "Aussprache und Alphabet"
+      - "Artikel: der, die, das"
+      - "Personalpronomen und Präsens"
+      - "sein und haben"
+      - "Akkusativ"
+      - "Zahlen, Uhrzeit, Datum"
+  - title: "A2"
+    topics:
+      - "Dativ"
+      - "Modalverben"
+      - "Trennbare Verben"
+      - "Perfekt"
+      - "Präpositionen mit Akkusativ und Dativ"
+      - "Nebensätze mit weil und dass"
+  - title: "B1"
+    topics:
+      - "Präteritum"
+      - "Adjektivdeklination"
+      - "Komparativ und Superlativ"
+      - "Passiv"
+      - "Relativsätze"
+      - "Konjunktiv II"

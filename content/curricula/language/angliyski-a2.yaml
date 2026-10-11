@@ -1,0 +1,34 @@
+slug: angliyski-a2
+title: "Английски език · A2 (5.–7. клас)"
+track: LANGUAGE
+subject: angliyski-ezik
+variant: "A2"
+description: "Минали и бъдещи времена, сравнения, модални глаголи."
+note: "Ориентировъчна структура по нива от Общата европейска езикова рамка (CEFR). Съобразете с учебника и класа си."
+source: mon
+order: 51
+sections:
+  - title: "Present tenses"
+    topics:
+      - "Present Simple vs Present Continuous"
+      - "Adverbs of frequency"
+  - title: "Past"
+    topics:
+      - "Past Simple — regular verbs"
+      - "Past Simple — irregular verbs"
+      - "Past Continuous"
+  - title: "Future"
+    topics:
+      - "Will vs going to"
+      - "Present Continuous for future arrangements"
+  - title: "Other grammar"
+    topics:
+      - "Comparatives and superlatives"
+      - "Countable and uncountable nouns — some, any, much, many"
+      - "Modal verbs — must, have to, should"
+      - "Present Perfect — introduction"
+  - title: "Skills"
+    topics:
+      - "Writing an email to a friend"
+      - "Describing a person and a place"
+      - "Reading for gist and detail"

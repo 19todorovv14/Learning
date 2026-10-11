@@ -1,0 +1,32 @@
+slug: frenski-a1-b1
+title: "Френски език · A1–B1"
+track: LANGUAGE
+subject: frenski-ezik
+variant: "A1–B1"
+description: "Граматика и лексика по френски от нулата до B1."
+note: "Ориентировъчна структура по нива от Общата европейска езикова рамка (CEFR). Съобразете с учебника и класа си."
+source: mon
+order: 56
+sections:
+  - title: "A1"
+    topics:
+      - "Alphabet et prononciation"
+      - "Articles définis et indéfinis"
+      - "Être et avoir"
+      - "Présent des verbes en -er"
+      - "La négation"
+      - "Poser une question"
+  - title: "A2"
+    topics:
+      - "Verbes en -ir et -re"
+      - "Accord des adjectifs"
+      - "Passé composé avec avoir"
+      - "Passé composé avec être"
+      - "Futur proche"
+  - title: "B1"
+    topics:
+      - "Imparfait"
+      - "Futur simple"
+      - "Pronoms COD et COI"
+      - "Conditionnel présent"
+      - "Subjonctif — introduction"

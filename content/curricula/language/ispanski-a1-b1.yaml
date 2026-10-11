@@ -1,0 +1,30 @@
+slug: ispanski-a1-b1
+title: "Испански език · A1–B1"
+track: LANGUAGE
+subject: ispanski-ezik
+variant: "A1–B1"
+description: "Граматика и лексика по испански от нулата до B1."
+note: "Ориентировъчна структура по нива от Общата европейска езикова рамка (CEFR). Съобразете с учебника и класа си."
+source: mon
+order: 57
+sections:
+  - title: "A1"
+    topics:
+      - "Pronunciación y alfabeto"
+      - "Artículos y género"
+      - "Ser y estar"
+      - "Presente — verbos regulares"
+      - "Presente — verbos irregulares"
+      - "Gustar"
+  - title: "A2"
+    topics:
+      - "Pretérito perfecto"
+      - "Pretérito indefinido"
+      - "Pretérito imperfecto"
+      - "Por y para"
+  - title: "B1"
+    topics:
+      - "Futuro simple"
+      - "Imperativo"
+      - "Condicional"
+      - "Presente de subjuntivo — introducción"

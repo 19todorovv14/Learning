@@ -1,0 +1,24 @@
+slug: angliyski-c1
+title: "Английски език · C1 (езикови гимназии)"
+track: LANGUAGE
+subject: angliyski-ezik
+variant: "C1"
+description: "Академичен английски за езикови гимназии."
+note: "Ориентировъчна структура по нива от Общата европейска езикова рамка (CEFR). Съобразете с учебника и класа си."
+source: mon
+order: 54
+sections:
+  - title: "Grammar in context"
+    topics:
+      - "Cleft sentences"
+      - "Participle clauses"
+      - "Advanced reported speech"
+  - title: "Vocabulary"
+    topics:
+      - "Idioms and fixed expressions"
+      - "Academic vocabulary"
+  - title: "Academic skills"
+    topics:
+      - "Academic essay"
+      - "Summarising and paraphrasing"
+      - "Presentations"

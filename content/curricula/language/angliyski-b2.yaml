@@ -1,0 +1,27 @@
+slug: angliyski-b2
+title: "Английски език · B2 (11.–12. клас, матура)"
+track: LANGUAGE
+subject: angliyski-ezik
+variant: "B2"
+description: "Напреднала граматика, писане и подготовка за матура и сертификати."
+note: "Ориентировъчна структура по нива от Общата европейска езикова рамка (CEFR). Съобразете с учебника и класа си."
+source: mon
+order: 53
+sections:
+  - title: "Advanced grammar"
+    topics:
+      - "Third and mixed conditionals"
+      - "Wish and if only"
+      - "Modals of deduction"
+      - "Advanced passive structures"
+      - "Inversion"
+  - title: "Writing"
+    topics:
+      - "Linking words and cohesion"
+      - "Essay (for and against)"
+      - "Report and review"
+  - title: "Exams"
+    topics:
+      - "ДЗИ по английски език — формат"
+      - "Cambridge B2 First и IELTS — общ преглед"
+      - "Reading and Use of English — стратегии"

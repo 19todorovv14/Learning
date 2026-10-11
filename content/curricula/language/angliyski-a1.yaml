@@ -1,0 +1,33 @@
+slug: angliyski-a1
+title: "Английски език · A1 (2.–4. клас)"
+track: LANGUAGE
+subject: angliyski-ezik
+variant: "A1"
+description: "Първи стъпки: to be, have got, Present Simple, основна лексика."
+note: "Ориентировъчна структура по нива от Общата европейска езикова рамка (CEFR). Съобразете с учебника и класа си."
+source: mon
+order: 50
+sections:
+  - title: "Starter"
+    topics:
+      - "Alphabet and sounds"
+      - "Greetings and introductions"
+      - "Numbers 1–100"
+      - "Colours and classroom objects"
+  - title: "Grammar"
+    topics:
+      - "The verb to be"
+      - "Have got"
+      - "Plural nouns"
+      - "There is / There are"
+      - "Prepositions of place"
+      - "Can / can't"
+      - "Present Simple — daily routine"
+  - title: "Vocabulary"
+    topics:
+      - "Family"
+      - "Food and drinks"
+      - "Animals"
+      - "Weather and seasons"
+      - "Clothes"
+      - "My house"
