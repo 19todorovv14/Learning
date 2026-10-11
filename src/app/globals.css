@@ -1,0 +1,435 @@
+@import "tailwindcss";
+@import "@fontsource-variable/inter/index.css";
+@import "@fontsource-variable/source-serif-4/index.css";
+@import "katex/dist/katex.min.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ───────── Дизайн токени ───────── */
+:root {
+  --bg: #faf8f4;
+  --surface: #ffffff;
+  --surface-2: #f3f1ec;
+  --surface-3: #ebe8e1;
+  --border: #e4e0d7;
+  --border-strong: #d3cec2;
+  --text: #1a1e26;
+  --text-2: #3a404c;
+  --muted: #646b78;
+  --primary: #1f3a5f;
+  --primary-hover: #182f4e;
+  --primary-soft: #e6ecf4;
+  --primary-fg: #ffffff;
+  --accent: #c8712a;
+  --accent-soft: #fbeedf;
+  --success: #2c7a52;
+  --success-soft: #e3f2e9;
+  --warning: #a86a12;
+  --warning-soft: #fbf1dc;
+  --danger: #b83232;
+  --danger-soft: #fbe6e4;
+  --info: #2a6496;
+  --info-soft: #e4eef8;
+  --ring: rgba(31, 58, 95, 0.35);
+  --shadow: 0 1px 2px rgba(26, 30, 38, 0.04), 0 2px 8px rgba(26, 30, 38, 0.04);
+  --shadow-lg: 0 10px 30px rgba(26, 30, 38, 0.08), 0 2px 6px rgba(26, 30, 38, 0.04);
+  --paper: #fffef9;
+  --paper-line: #dce6f2;
+  --paper-margin: #f2b8b5;
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #0e1116;
+  --surface: #151920;
+  --surface-2: #1b2029;
+  --surface-3: #232935;
+  --border: #272e3a;
+  --border-strong: #353d4b;
+  --text: #e9ebef;
+  --text-2: #c9ced8;
+  --muted: #949cab;
+  --primary: #8db3e6;
+  --primary-hover: #a6c4ee;
+  --primary-soft: #1c2a3e;
+  --primary-fg: #0e1116;
+  --accent: #eba15e;
+  --accent-soft: #33261a;
+  --success: #6cc496;
+  --success-soft: #16291f;
+  --warning: #e3b05a;
+  --warning-soft: #2f2615;
+  --danger: #f08a85;
+  --danger-soft: #331b1b;
+  --info: #84b6e6;
+  --info-soft: #172636;
+  --ring: rgba(141, 179, 230, 0.45);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --paper: #171b22;
+  --paper-line: #232b38;
+  --paper-margin: #5a2f33;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-text: var(--text);
+  --color-text-2: var(--text-2);
+  --color-muted: var(--muted);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-fg: var(--primary-fg);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Source Serif 4 Variable", ui-serif, Georgia, serif;
+  --shadow-card: var(--shadow);
+  --shadow-pop: var(--shadow-lg);
+  --radius-card: 14px;
+}
+
+/* ───────── База ───────── */
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-padding-top: 5rem;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01";
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--primary-soft);
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ───────── Компоненти (Tailwind v4 @utility, за да работят с @apply и варианти) ───────── */
+@utility card {
+  @apply rounded-[var(--radius-card)] border border-border bg-surface shadow-card;
+}
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60;
+}
+@utility btn-primary {
+  @apply btn bg-primary text-primary-fg hover:bg-primary-hover;
+}
+@utility btn-secondary {
+  @apply btn border border-border bg-surface text-text hover:bg-surface-2;
+}
+@utility btn-ghost {
+  @apply btn text-text-2 hover:bg-surface-2;
+}
+@utility btn-accent {
+  @apply btn bg-accent text-white hover:opacity-90;
+}
+@utility btn-danger {
+  @apply btn bg-danger text-white hover:opacity-90;
+}
+@utility input {
+  @apply w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-[15px] text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-4 focus:ring-[var(--ring)];
+}
+@utility label {
+  @apply mb-1.5 block text-sm font-medium text-text-2;
+}
+@utility badge {
+  @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+}
+@utility chip {
+  @apply inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-sm text-text-2 transition-colors hover:border-border-strong hover:bg-surface-2;
+}
+@utility section-title {
+  @apply text-lg font-semibold tracking-tight text-text;
+}
+@utility kicker {
+  @apply text-xs font-semibold uppercase tracking-[0.08em] text-muted;
+}
+
+/* ───────── Учебно съдържание (prose) ───────── */
+.prose-lesson {
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  color: var(--text-2);
+  max-width: 72ch;
+}
+.prose-lesson > * + * {
+  margin-top: 0.9em;
+}
+.prose-lesson h2 {
+  margin-top: 1.8em;
+  font-size: 1.35rem;
+  line-height: 1.3;
+  font-weight: 650;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.prose-lesson h3 {
+  margin-top: 1.5em;
+  font-size: 1.12rem;
+  font-weight: 650;
+  color: var(--text);
+}
+.prose-lesson h4 {
+  margin-top: 1.2em;
+  font-weight: 650;
+  color: var(--text);
+}
+.prose-lesson strong {
+  color: var(--text);
+  font-weight: 650;
+}
+.prose-lesson a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.prose-lesson ul {
+  list-style: disc;
+  padding-left: 1.4em;
+}
+.prose-lesson ol {
+  list-style: decimal;
+  padding-left: 1.5em;
+}
+.prose-lesson li + li {
+  margin-top: 0.3em;
+}
+.prose-lesson li > ul,
+.prose-lesson li > ol {
+  margin-top: 0.3em;
+}
+.prose-lesson li::marker {
+  color: var(--muted);
+}
+.prose-lesson blockquote {
+  border-left: 3px solid var(--border-strong);
+  padding-left: 1em;
+  color: var(--muted);
+  font-style: italic;
+}
+.prose-lesson code {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.1em 0.35em;
+  font-size: 0.9em;
+}
+.prose-lesson pre {
+  background: #0f141b;
+  color: #e6edf3;
+  border-radius: 12px;
+  padding: 1em 1.2em;
+  overflow-x: auto;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+.prose-lesson pre code {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: inherit;
+}
+.prose-lesson table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  display: block;
+  overflow-x: auto;
+}
+.prose-lesson th,
+.prose-lesson td {
+  border: 1px solid var(--border);
+  padding: 0.5em 0.75em;
+  text-align: left;
+  vertical-align: top;
+}
+.prose-lesson th {
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 600;
+}
+.prose-lesson hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 2em 0;
+}
+.prose-lesson img {
+  border-radius: 12px;
+  max-width: 100%;
+}
+.prose-lesson .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.4em 0;
+}
+
+/* Callout блокове: :::definition, :::tip, :::warning, :::example, :::remember, :::formula */
+.callout {
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  padding: 0.9em 1.1em;
+  background: var(--surface-2);
+}
+.callout > * + * {
+  margin-top: 0.6em;
+}
+.callout-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.callout-definition {
+  background: var(--primary-soft);
+  border-color: color-mix(in srgb, var(--primary) 25%, transparent);
+}
+.callout-definition .callout-title {
+  color: var(--primary);
+}
+.callout-tip {
+  background: var(--success-soft);
+  border-color: color-mix(in srgb, var(--success) 25%, transparent);
+}
+.callout-tip .callout-title {
+  color: var(--success);
+}
+.callout-warning {
+  background: var(--danger-soft);
+  border-color: color-mix(in srgb, var(--danger) 25%, transparent);
+}
+.callout-warning .callout-title {
+  color: var(--danger);
+}
+.callout-example {
+  background: var(--surface-2);
+}
+.callout-example .callout-title {
+  color: var(--text-2);
+}
+.callout-remember {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.callout-remember .callout-title {
+  color: var(--accent);
+}
+.callout-formula {
+  background: var(--surface);
+  border: 1.5px solid var(--border-strong);
+  text-align: center;
+}
+.callout-formula .callout-title {
+  color: var(--muted);
+  justify-content: center;
+}
+
+/* Тетрадка — за режим „Уча за училище“ */
+.notebook {
+  position: relative;
+  background-color: var(--paper);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(1.75em - 1px),
+    var(--paper-line) calc(1.75em - 1px),
+    var(--paper-line) 1.75em
+  );
+  background-position: 0 0.55em;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  padding: 1.5em 1.5em 1.75em 3.25em;
+  box-shadow: var(--shadow);
+}
+.notebook::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 2.25em;
+  width: 1.5px;
+  background: var(--paper-margin);
+}
+@media (max-width: 640px) {
+  .notebook {
+    padding: 1.25em 1em 1.5em 2.25em;
+  }
+  .notebook::before {
+    left: 1.4em;
+  }
+}
+.notebook .prose-lesson {
+  max-width: none;
+}
+.notebook .prose-lesson > :first-child {
+  margin-top: 0;
+}
+
+/* Печат на записки */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+  .notebook {
+    box-shadow: none;
+    border: 0;
+  }
+}
+
+/* Скролбари */
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.fade-in {
+  animation: fade-in 0.25s ease-out both;
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

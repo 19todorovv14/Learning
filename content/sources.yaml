@@ -1,0 +1,96 @@
+# Източници. Само реални адреси. „note“ описва какво точно е проверено.
+# Сайтът на МОН е зад защита Cloudflare и не може да се провери автоматично от сървъра —
+# затова тези записи остават със статус „непроверено“, докато редактор не ги потвърди.
+
+- key: mon
+  title: "Министерство на образованието и науката — учебни програми и учебни планове"
+  organization: "МОН"
+  url: "https://www.mon.bg/"
+  type: OFFICIAL_CURRICULUM
+  note: "Официалните учебни програми по предмети и класове се публикуват на сайта на МОН. Автоматичната проверка не е възможна (Cloudflare)."
+- key: zpuo
+  verified: "2026-10-11"
+  title: "Закон за предучилищното и училищното образование"
+  organization: "Народно събрание (текст: Ciela Norma)"
+  url: "https://www.ciela.net/svobodna-zona-normativi/view/2136641509/zakon-za-preduchilishtnoto-i-uchilishtnoto-obrazovanie"
+  type: LEGISLATION
+  note: "Проверено, че страницата съдържа закона (11.10.2026)."
+- key: zvo
+  verified: "2026-10-11"
+  title: "Закон за висшето образование"
+  organization: "Народно събрание (текст: Ciela Norma)"
+  url: "https://www.ciela.net/svobodna-zona-normativi/view/2133647361/zakon-za-visshoto-obrazovanie"
+  type: LEGISLATION
+  note: "Проверено, че страницата съдържа закона (11.10.2026)."
+- key: neaa
+  verified: "2026-10-11"
+  title: "Национална агенция за оценяване и акредитация"
+  organization: "НАОА"
+  url: "https://www.neaa.government.bg/"
+  type: REGISTER
+- key: navet-sppoo
+  verified: "2026-10-11"
+  title: "Списък на професиите за професионално образование и обучение"
+  organization: "НАПОО"
+  url: "https://www.navet.government.bg/bg/spisak-na-profesiite-za-poo/"
+  type: OFFICIAL_CURRICULUM
+  note: "Проверено (11.10.2026): страницата съдържа СППОО-2024 и СППОО-2003."
+- key: zdvp
+  verified: "2026-10-11"
+  title: "Закон за движението по пътищата"
+  organization: "Народно събрание (текст: Ciela Norma)"
+  url: "https://www.ciela.net/svobodna-zona-normativi/view/2134649345/zakon-za-dvizhenieto-po-patishtata"
+  type: LEGISLATION
+  note: "Проверено, че страницата съдържа закона (11.10.2026). Правилата се променят — проверявайте актуалната редакция."
+- key: iaaa-exams
+  verified: "2026-10-11"
+  title: "Изпити за придобиване на правоспособност за управление на МПС"
+  organization: "Изпълнителна агенция „Автомобилна администрация“"
+  url: "https://www.rta.government.bg/bg/archive_c_izpit_vodachi"
+  type: DRIVING_OFFICIAL
+  note: "Проверено (11.10.2026)."
+- key: iaaa-themes
+  verified: "2026-10-11"
+  title: "Изпитни теми за кандидатите за водачи (официални материали по теми)"
+  organization: "Изпълнителна агенция „Автомобилна администрация“"
+  url: "https://www.rta.government.bg/bg/archive_p_exam-themes-for-drivers-license"
+  type: DRIVING_OFFICIAL
+  note: "Проверено (11.10.2026): 19 теми за теоретичния изпит и допълнителни теми за C, D, E и устройство на МПС."
+- key: bchk-first-aid
+  verified: "2026-10-11"
+  title: "Български Червен кръст — обучение по първа помощ"
+  organization: "Български Червен кръст"
+  url: "https://www.redcross.bg/activities/firstaid"
+  type: FIRST_AID_OFFICIAL
+  note: "Проверено (11.10.2026)."
+- key: bchk
+  verified: "2026-10-11"
+  title: "Български Червен кръст"
+  organization: "Български Червен кръст"
+  url: "https://redcross.bg/"
+  type: FIRST_AID_OFFICIAL
+- key: erc-guidelines
+  verified: "2026-10-11"
+  title: "Насоки за ресусцитация на Европейския съвет по ресусцитация (ERC)"
+  organization: "European Resuscitation Council"
+  url: "https://cprguidelines.eu/"
+  type: FIRST_AID_OFFICIAL
+  note: "Международен стандарт за кардиопулмонална ресусцитация и първа помощ."
+- key: mh
+  verified: "2026-10-11"
+  title: "Министерство на здравеопазването"
+  organization: "МЗ"
+  url: "https://www.mh.government.bg/"
+  type: OTHER
+- key: e-uchebnik
+  verified: "2026-10-11"
+  title: "Е-учебник — платформа за електронни учебни ресурси"
+  organization: "e-uchebnik.bg"
+  url: "https://e-uchebnik.bg/"
+  type: REFERENCE
+- key: bas
+  verified: "2026-10-11"
+  title: "Българска академия на науките"
+  organization: "БАН"
+  url: "https://www.bas.bg/"
+  type: REFERENCE

@@ -1,0 +1,266 @@
+# Предмети и направления. icon = име от SubjectIcon (src/components/learning/subject-icon.tsx)
+
+# ── Общообразователни ──
+- slug: bulgarski-ezik
+  name: "Български език"
+  shortName: "БЕ"
+  category: LANGUAGE_LITERATURE
+  color: "#2F5D8A"
+  icon: language
+  description: "Правопис, граматика, пунктуация, видове текстове. Официално предметът е „Български език и литература“."
+  order: 1
+- slug: literatura
+  name: "Литература"
+  shortName: "Лит."
+  category: LANGUAGE_LITERATURE
+  color: "#7A3E65"
+  icon: feather
+  description: "Литературни произведения, автори, анализ, интерпретативно съчинение и есе."
+  order: 2
+- slug: matematika
+  name: "Математика"
+  shortName: "Мат."
+  category: MATHEMATICS
+  color: "#1F3A5F"
+  icon: sigma
+  description: "Аритметика, алгебра, геометрия, функции, вероятности — от смятането до матурата."
+  order: 3
+- slug: okolen-svyat
+  name: "Околен свят"
+  category: SCIENCE
+  color: "#3B7D4F"
+  icon: sprout
+  description: "Първи знания за природата и обществото (1.–2. клас)."
+  order: 10
+- slug: chovekat-i-prirodata
+  name: "Човекът и природата"
+  category: SCIENCE
+  color: "#2E7D6B"
+  icon: leaf
+  description: "Природни науки за 3.–6. клас."
+  order: 11
+- slug: chovekat-i-obshtestvoto
+  name: "Човекът и обществото"
+  category: SOCIAL
+  color: "#8A5A2F"
+  icon: users
+  description: "История и география на България за 3.–4. клас."
+  order: 12
+- slug: istoriya
+  name: "История и цивилизации"
+  shortName: "История"
+  category: SOCIAL
+  color: "#8C4A2F"
+  icon: landmark
+  description: "Българска и световна история от древността до днес."
+  order: 20
+- slug: geografiya
+  name: "География и икономика"
+  shortName: "География"
+  category: SOCIAL
+  color: "#2B7A78"
+  icon: globe
+  description: "Природа, население и стопанство на България и света."
+  order: 21
+- slug: biologiya
+  name: "Биология"
+  category: SCIENCE
+  color: "#3E8E41"
+  icon: dna
+  description: "Клетка, организми, човек и здраве, генетика, екология и еволюция."
+  order: 22
+- slug: himiya
+  name: "Химия"
+  category: SCIENCE
+  color: "#8E44AD"
+  icon: flask
+  description: "Вещества, реакции, периодична система, органична химия. Официално: „Химия и опазване на околната среда“."
+  order: 23
+- slug: fizika
+  name: "Физика"
+  category: SCIENCE
+  color: "#C0392B"
+  icon: atom
+  description: "Движение, сили, енергия, електричество, светлина, атом и Вселена."
+  order: 24
+- slug: informatika
+  name: "Информатика"
+  category: TECHNOLOGY
+  color: "#2C3E50"
+  icon: code
+  description: "Алгоритми и програмиране."
+  order: 30
+- slug: informatsionni-tehnologii
+  name: "Информационни технологии"
+  shortName: "ИТ"
+  category: TECHNOLOGY
+  color: "#34495E"
+  icon: monitor
+  description: "Компютърна грамотност, документи, таблици, презентации, интернет и безопасност."
+  order: 31
+- slug: filosofiya
+  name: "Философия"
+  category: SOCIAL
+  color: "#5D4E75"
+  icon: brain
+  description: "Логика, етика, психология и философски въпроси."
+  order: 32
+- slug: grazhdansko-obrazovanie
+  name: "Гражданско образование"
+  category: SOCIAL
+  color: "#4A6572"
+  icon: scale
+  description: "Държава, права и отговорности на гражданина."
+  order: 33
+- slug: tehnologii-i-predpriemachestvo
+  name: "Технологии и предприемачество"
+  category: TECHNOLOGY
+  color: "#A0522D"
+  icon: hammer
+  description: "Технологии, материали, бизнес идеи и предприемачество."
+  order: 34
+- slug: muzika
+  name: "Музика"
+  category: ARTS
+  color: "#B7472A"
+  icon: music
+  description: "Музикална грамотност, жанрове, композитори и инструменти."
+  order: 40
+- slug: izobrazitelno-izkustvo
+  name: "Изобразително изкуство"
+  category: ARTS
+  color: "#D35400"
+  icon: palette
+  description: "Изкуство, стилове, творци и художествени техники."
+  order: 41
+- slug: fizichesko-vazpitanie
+  name: "Физическо възпитание и спорт"
+  shortName: "ФВС"
+  category: SPORT
+  color: "#16A085"
+  icon: dumbbell
+  description: "Теория, правила на спортовете и здравословно движение."
+  order: 42
+
+# ── Чужди езици ──
+- slug: angliyski-ezik
+  name: "Английски език"
+  category: FOREIGN_LANGUAGE
+  color: "#1A5276"
+  icon: languages
+  order: 50
+- slug: nemski-ezik
+  name: "Немски език"
+  category: FOREIGN_LANGUAGE
+  color: "#5B2C6F"
+  icon: languages
+  order: 51
+- slug: frenski-ezik
+  name: "Френски език"
+  category: FOREIGN_LANGUAGE
+  color: "#1F618D"
+  icon: languages
+  order: 52
+- slug: ispanski-ezik
+  name: "Испански език"
+  category: FOREIGN_LANGUAGE
+  color: "#B03A2E"
+  icon: languages
+  order: 53
+- slug: ruski-ezik
+  name: "Руски език"
+  category: FOREIGN_LANGUAGE
+  color: "#943126"
+  icon: languages
+  order: 54
+- slug: italianski-ezik
+  name: "Италиански език"
+  category: FOREIGN_LANGUAGE
+  color: "#196F3D"
+  icon: languages
+  order: 55
+- slug: kitayski-ezik
+  name: "Китайски език"
+  category: FOREIGN_LANGUAGE
+  color: "#A93226"
+  icon: languages
+  order: 56
+
+# ── Професионално обучение ──
+- slug: avtomobilna-tehnika
+  name: "Автомобилна техника"
+  category: VOCATIONAL
+  color: "#566573"
+  icon: car
+  description: "Двигатели, трансмисии, спирачки, окачване, електроника и диагностика."
+  order: 70
+- slug: programirane
+  name: "Програмиране"
+  category: VOCATIONAL
+  color: "#1B4F72"
+  icon: code
+  description: "Основи на програмирането, алгоритми, ООП, бази данни и уеб."
+  order: 71
+- slug: elektrotehnika
+  name: "Електротехника"
+  category: VOCATIONAL
+  color: "#B9770E"
+  icon: zap
+  description: "Електрически вериги, машини, инсталации и безопасност."
+  order: 72
+- slug: ikonomika
+  name: "Икономика и счетоводство"
+  category: VOCATIONAL
+  color: "#117A65"
+  icon: briefcase
+  description: "Икономика, счетоводство, финанси, маркетинг."
+  order: 73
+- slug: turizam
+  name: "Туризъм, хотелиерство и ресторантьорство"
+  shortName: "Туризъм"
+  category: VOCATIONAL
+  color: "#AF601A"
+  icon: hotel
+  description: "Хотелиерство, ресторантьорство, кулинария и туризъм."
+  order: 74
+
+# ── Висше образование ──
+- slug: vissha-matematika
+  name: "Висша математика"
+  category: UNIVERSITY
+  color: "#283747"
+  icon: sigma
+  description: "Обща подготовка по висша математика за инженерни и икономически специалности."
+  order: 80
+- slug: universitetska-informatika
+  name: "Компютърни науки (университет)"
+  shortName: "Компютърни науки"
+  category: UNIVERSITY
+  color: "#1C2833"
+  icon: cpu
+  description: "Обща подготовка по структури от данни, алгоритми и програмиране."
+  order: 81
+
+# ── Шофьорски изпити и първа помощ ──
+- slug: shofyorski-izpit
+  name: "Шофьорски изпит"
+  category: DRIVING
+  color: "#1E8449"
+  icon: car
+  description: "Правила за движение, пътни знаци, предимство и безопасност."
+  order: 90
+- slug: parva-pomosht
+  name: "Първа помощ"
+  category: FIRST_AID
+  color: "#C0392B"
+  icon: heart
+  description: "Долекарска помощ, реанимация, кръвотечения, травми и спешни състояния."
+  order: 91
+- slug: spasitel
+  name: "Спасител на водни площи"
+  shortName: "Спасител"
+  category: FIRST_AID
+  color: "#2874A6"
+  icon: lifebuoy
+  description: "Теоретична подготовка: безопасност във водата, спасяване, първа помощ при удавяне."
+  order: 92

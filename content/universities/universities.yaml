@@ -1,0 +1,338 @@
+# Допълнителни данни за висшите училища от Регистъра на НАЦИД (rvu.nacid.bg).
+# name трябва да съвпада точно с името в регистъра.
+# checked: true — сайтът е отговорил при автоматична проверка (11.10.2026).
+# Вид: определен по наименованието (университет / академия или висше училище / колеж).
+
+- name: "Аграрен университет - Пловдив"
+  slug: au-plovdiv
+  short: "АУ"
+  city: "Пловдив"
+  ownership: STATE
+  website: "https://au-plovdiv.bg"
+- name: "Академия за музикално, танцово и изобразително изкуство „Проф. Асен Диамандиев“ – Пловдив"
+  slug: amtii-plovdiv
+  short: "АМТИИ"
+  city: "Пловдив"
+  ownership: STATE
+  website: "https://artacademyplovdiv.com"
+- name: "Академия на Министерство на вътрешните работи"
+  slug: akademia-mvr
+  short: "Академия на МВР"
+  city: "София"
+  ownership: STATE
+- name: "Академия по национална и информационна сигурност"
+  slug: anis
+  short: "АНИС"
+  city: "София"
+  ownership: STATE
+  website: "https://www.anis.bg"
+  checked: true
+- name: "Американски университет в България"
+  slug: aubg
+  short: "АУБ"
+  city: "Благоевград"
+  ownership: PRIVATE
+  website: "https://www.aubg.edu"
+  checked: true
+- name: "Бургаски държавен университет „Проф. д-р Асен Златаров“"
+  slug: bdu-burgas
+  short: "БДУ"
+  city: "Бургас"
+  ownership: STATE
+  website: "https://www.btu.bg"
+- name: "Бургаски свободен университет"
+  slug: bsu-burgas
+  short: "БСУ"
+  city: "Бургас"
+  ownership: PRIVATE
+  website: "https://www.bfu.bg"
+- name: "Варненски свободен университет \"Черноризец Храбър\""
+  slug: vsu-varna
+  short: "ВСУ"
+  city: "Варна"
+  ownership: PRIVATE
+  website: "https://www.vfu.bg"
+  checked: true
+- name: "Великотърновски университет \"Св. св. Кирил и Методий\""
+  slug: vtu-veliko-tarnovo
+  short: "ВТУ"
+  city: "Велико Търново"
+  ownership: STATE
+  website: "https://www.uni-vt.bg"
+- name: "Висше военновъздушно училище \"Георги Бенковски\""
+  slug: vvvu-benkovski
+  short: "ВВВУ"
+  city: "Долна Митрополия"
+  ownership: STATE
+  website: "https://www.af-acad.bg"
+  checked: true
+- name: "Висше военноморско училище \"Н.Й.Вапцаров\""
+  slug: vvmu-varna
+  short: "ВВМУ"
+  city: "Варна"
+  ownership: STATE
+  website: "https://www.naval-acad.bg"
+  checked: true
+- name: "Висше строително училищe \"Любен Каравелов\""
+  slug: vsu-karavelov
+  short: "ВСУ „Л. Каравелов“"
+  city: "София"
+  ownership: STATE
+  website: "https://vsu.bg"
+  checked: true
+- name: "Висше транспортно училище \"Тодор Каблешков\""
+  slug: vtu-kableshkov
+  short: "ВТУ „Т. Каблешков“"
+  city: "София"
+  ownership: STATE
+  website: "https://www.vtu.bg"
+  checked: true
+- name: "Висше училище по агробизнес и развитие на регионите - Пловдив"
+  slug: vuarr-plovdiv
+  short: "ВУАРР"
+  city: "Пловдив"
+  ownership: PRIVATE
+  website: "https://www.uard.bg"
+- name: "Висше училище по мениджмънт - Варна"
+  slug: vum-varna
+  short: "ВУМ"
+  city: "Варна"
+  ownership: PRIVATE
+  website: "https://vum.bg"
+- name: "Висше училище по телекомуникации и пощи"
+  slug: vutp
+  short: "ВУТП"
+  city: "София"
+  ownership: STATE
+  website: "https://www.utp.bg"
+  checked: true
+- name: "Военна академия \"Г. С. Раковски\" - София"
+  slug: voenna-akademia
+  short: "ВА „Г. С. Раковски“"
+  city: "София"
+  ownership: STATE
+  website: "https://rndc.bg"
+  checked: true
+- name: "Европейски политехнически университет"
+  slug: epu-pernik
+  short: "ЕПУ"
+  city: "Перник"
+  ownership: PRIVATE
+  website: "https://www.epu.bg"
+- name: "Икономически университет - Варна"
+  slug: ue-varna
+  short: "ИУ-Варна"
+  city: "Варна"
+  ownership: STATE
+  website: "https://www.ue-varna.bg"
+  checked: true
+- name: "Колеж по мениджмънт, търговия и маркетинг - София"
+  slug: kmtm-sofia
+  short: "КМТМ"
+  city: "София"
+  ownership: PRIVATE
+- name: "Колеж по туризъм - Благоевград"
+  slug: kolezh-turizam-blagoevgrad
+  short: "Колеж по туризъм"
+  city: "Благоевград"
+  ownership: PRIVATE
+- name: "Лесотехнически университет"
+  slug: ltu
+  short: "ЛТУ"
+  city: "София"
+  ownership: STATE
+  website: "https://ltu.bg"
+  checked: true
+- name: "Медицински университет - Плевен"
+  slug: mu-pleven
+  short: "МУ-Плевен"
+  city: "Плевен"
+  ownership: STATE
+  website: "https://www.mu-pleven.bg"
+  checked: true
+- name: "Медицински университет - Пловдив"
+  slug: mu-plovdiv
+  short: "МУ-Пловдив"
+  city: "Пловдив"
+  ownership: STATE
+  website: "https://mu-plovdiv.bg"
+  checked: true
+- name: "Медицински университет - София"
+  slug: mu-sofia
+  short: "МУ-София"
+  city: "София"
+  ownership: STATE
+  website: "https://mu-sofia.bg"
+  checked: true
+- name: "Медицински университет \"Проф. д-р Параскев Стоянов\" - Варна"
+  slug: mu-varna
+  short: "МУ-Варна"
+  city: "Варна"
+  ownership: STATE
+  website: "https://www.mu-varna.bg"
+  checked: true
+- name: "Международно висше бизнес училище - Ботевград"
+  slug: mvbu-botevgrad
+  short: "МВБУ"
+  city: "Ботевград"
+  ownership: PRIVATE
+  website: "https://www.ibsedu.bg"
+- name: "Минно-геоложки университет \"Св. Иван Рилски\""
+  slug: mgu
+  short: "МГУ"
+  city: "София"
+  ownership: STATE
+  website: "https://mgu.bg"
+  checked: true
+- name: "Национален военен университет \"Васил Левски\""
+  slug: nvu
+  short: "НВУ"
+  city: "Велико Търново"
+  ownership: STATE
+  website: "https://www.nvu.bg"
+  checked: true
+- name: "Национална академия за театрално и филмово изкуство \"Кръстьо Сарафов\""
+  slug: natfiz
+  short: "НАТФИЗ"
+  city: "София"
+  ownership: STATE
+  website: "https://natfiz.bg"
+- name: "Национална музикална академия \"Проф. Панчо Владигеров\""
+  slug: nma
+  short: "НМА"
+  city: "София"
+  ownership: STATE
+  website: "https://nma.bg"
+- name: "Национална спортна академия \"Васил Левски\""
+  slug: nsa
+  short: "НСА"
+  city: "София"
+  ownership: STATE
+  website: "https://nsa.bg"
+  checked: true
+- name: "Национална художествена академия"
+  slug: nha
+  short: "НХА"
+  city: "София"
+  ownership: STATE
+  website: "https://nha.bg"
+- name: "Нов български университет"
+  slug: nbu
+  short: "НБУ"
+  city: "София"
+  ownership: PRIVATE
+  website: "https://www.nbu.bg"
+  checked: true
+- name: "Пловдивски университет \"Паисий Хилендарски\""
+  slug: pu-plovdiv
+  short: "ПУ"
+  city: "Пловдив"
+  ownership: STATE
+  website: "https://uni-plovdiv.bg"
+  checked: true
+- name: "Русенски университет \"Ангел Кънчев\""
+  slug: ru-ruse
+  short: "РУ"
+  city: "Русе"
+  ownership: STATE
+  website: "https://www.uni-ruse.bg"
+  checked: true
+- name: "Софийски университет \"Св. Климент Охридски\""
+  slug: su-sofia
+  short: "СУ"
+  city: "София"
+  ownership: STATE
+  website: "https://www.uni-sofia.bg"
+  checked: true
+- name: "Стопанска академия \"Димитър А. Ценов\" - Свищов"
+  slug: sa-svishtov
+  short: "СА"
+  city: "Свищов"
+  ownership: STATE
+  website: "https://www.uni-svishtov.bg"
+  checked: true
+- name: "Театрален колеж \"Любен Гройс\""
+  slug: teatralen-kolezh-groys
+  short: "Театрален колеж"
+  city: "София"
+  ownership: PRIVATE
+- name: "Технически университет - Варна"
+  slug: tu-varna
+  short: "ТУ-Варна"
+  city: "Варна"
+  ownership: STATE
+  website: "https://www.tu-varna.bg"
+- name: "Технически университет - Габрово"
+  slug: tu-gabrovo
+  short: "ТУ-Габрово"
+  city: "Габрово"
+  ownership: STATE
+  website: "https://www.tugab.bg"
+  checked: true
+- name: "Технически университет - София"
+  slug: tu-sofia
+  short: "ТУ-София"
+  city: "София"
+  ownership: STATE
+  website: "https://tu-sofia.bg"
+  checked: true
+- name: "Тракийски университет - Стара Загора"
+  slug: tru-stara-zagora
+  short: "ТрУ"
+  city: "Стара Загора"
+  ownership: STATE
+  website: "https://trakia-uni.bg"
+- name: "Университет за национално и световно стопанство"
+  slug: unss
+  short: "УНСС"
+  city: "София"
+  ownership: STATE
+  website: "https://www.unwe.bg"
+  checked: true
+- name: "Университет по архитектура, строителство и геодезия"
+  slug: uasg
+  short: "УАСГ"
+  city: "София"
+  ownership: STATE
+  website: "https://uacg.bg"
+  checked: true
+- name: "Университет по библиотекознание и информационни технологии"
+  slug: unibit
+  short: "УниБИТ"
+  city: "София"
+  ownership: STATE
+  website: "https://www.unibit.bg"
+- name: "Университет по застраховане и финанси"
+  slug: uzf
+  short: "УЗФ"
+  city: "София"
+  ownership: PRIVATE
+  website: "https://uzf.bg"
+  checked: true
+- name: "Университет по хранителни технологии"
+  slug: uht-plovdiv
+  short: "УХТ"
+  city: "Пловдив"
+  ownership: STATE
+  website: "https://uft-plovdiv.bg"
+  checked: true
+- name: "Химикотехнологичен и металургичен университет - София"
+  slug: htmu
+  short: "ХТМУ"
+  city: "София"
+  ownership: STATE
+  website: "https://uctm.edu"
+  checked: true
+- name: "Шуменски университет \"Епископ Константин Преславски\""
+  slug: shu
+  short: "ШУ"
+  city: "Шумен"
+  ownership: STATE
+  website: "https://shu.bg"
+- name: "Югозападен университет \"Неофит Рилски\""
+  slug: yuzu
+  short: "ЮЗУ"
+  city: "Благоевград"
+  ownership: STATE
+  website: "https://www.swu.bg"
+  checked: true
