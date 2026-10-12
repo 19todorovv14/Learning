@@ -19,7 +19,8 @@ export async function logError(message: string, opts: { stack?: string; path?: s
       data: {
         message: message.slice(0, 2000),
         stack: opts.stack?.slice(0, 8000),
-        path: opts.path?.slice(0, 500),
+        // Без query string — там може да има токени (напр. линк за смяна на парола).
+        path: opts.path?.split("?")[0].slice(0, 500),
         digest: opts.digest,
       },
     });

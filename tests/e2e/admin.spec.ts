@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 
 const ADMIN = `admin-${Date.now()}@example.bg`;
 const PASS = "АдминПарола2026";
+const NOTE = `e2e промяна ${Date.now()}`;
 
 test.beforeAll(() => {
   execSync(`npx tsx scripts/create-admin.ts ${ADMIN} "${PASS}" "Админ Тест"`, {
@@ -33,11 +34,11 @@ test("администратор редактира урок, вижда вер�
 
   // Валидна промяна → нова версия
   await editor.fill(original.replace(/^minutes: \d+$/m, "minutes: 31"));
-  await page.getByPlaceholder("Кратко описание на промяната (по желание)").fill("e2e промяна");
+  await page.getByPlaceholder("Кратко описание на промяната (по желание)").fill(NOTE);
   await page.getByRole("button", { name: "Запази нова версия" }).click();
   await expect(page.getByText("Урокът е записан като нова версия.")).toBeVisible();
   await page.reload();
-  await expect(page.getByText("e2e промяна")).toBeVisible();
+  await expect(page.getByText(NOTE)).toBeVisible();
 
   // Одобряване от опашката
   await page.goto("/admin/review");

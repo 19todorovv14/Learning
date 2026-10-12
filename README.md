@@ -1,36 +1,247 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BG LEARN
 
-## Getting Started
+Учебна платформа за българските ученици и студенти: уроци „като в тетрадката“ за 1.–12. клас, подготовка за НВО и матури, кандидатстване, университети, професионално обучение, шофьорски изпит, първа помощ и спасители — с тестове, флашкарти, план за учене и AI учител.
 
-First, run the development server:
+> **Статус на съдържанието.** Учебните програми (102 курса, 1260 теми) и регистрите (университети, професии, категории МПС) са заредени. Уроците са **30** — написани с помощта на AI и маркирани „Чака проверка“, докато преподавател не ги прегледа. Платформата е готова да приема още уроци чрез Markdown файлове, админ редактора или импорт.
+
+## Съдържание
+
+- [Технологии](#технологии)
+- [Бърз старт](#бърз-старт)
+- [Променливи на средата](#променливи-на-средата)
+- [Първи администратор](#първи-администратор)
+- [Съдържание: формат на уроците](#съдържание-формат-на-уроците)
+- [Импорт](#импорт)
+- [AI учител](#ai-учител)
+- [Тестове](#тестове)
+- [Деплой в продукция](#деплой-в-продукция)
+- [Архивиране](#архивиране)
+- [Сигурност и лични данни](#сигурност-и-лични-данни)
+- [Известни ограничения](#известни-ограничения)
+
+## Технологии
+
+| Слой | Технология |
+|---|---|
+| Уеб | Next.js 16 (App Router, Server Actions), React 19, TypeScript |
+| Стилове | Tailwind CSS 4, собствени шрифтове (Inter, Source Serif 4 с кирилица), светла/тъмна тема |
+| База данни | PostgreSQL 14+ (`pg_trgm`), Prisma 7 |
+| Автентикация | собствена: сесии в базата (хеширани токени), Argon2id, потвърждение на имейл, смяна на парола |
+| AI | Anthropic Claude API (`@anthropic-ai/sdk`) — само от сървъра |
+| Математика | KaTeX (+ mhchem за химия) |
+| Тестове | Vitest (unit + интеграционни срещу PostgreSQL), Playwright (e2e) |
+
+## Бърз старт
+
+Изисквания: Node.js 22+, PostgreSQL 14+.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# 1. Зависимости
+npm install
+
+# 2. База данни (пример за локален PostgreSQL)
+sudo -u postgres psql -c "CREATE USER bglearn WITH PASSWORD 'bglearn' CREATEDB;"
+sudo -u postgres psql -c "CREATE DATABASE bglearn OWNER bglearn;"
+
+# 3. Настройки
+cp .env.example .env      # попълнете поне DATABASE_URL
+
+# 4. Схема + данни (университети, професии, категории, програми, уроци)
+npm run db:migrate
+npm run db:seed
+
+# 5. Стартиране
+npm run dev               # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Без SMTP писмата (потвърждение на имейл, смяна на парола) се показват на `/dev/mailbox` — само в development.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Полезни команди
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Команда | Какво прави |
+|---|---|
+| `npm run dev` | сървър за разработка |
+| `npm run build` / `npm start` | продукционен build и старт |
+| `npm run typecheck` / `npm run lint` | TypeScript и ESLint |
+| `npm test` | unit + интеграционни тестове (нужна е тестова база) |
+| `npm run test:e2e` | Playwright тестове (стартира продукционен сървър на порт 3100) |
+| `npm run db:migrate` | прилага миграциите |
+| `npm run db:new-migration -- име` | нова миграция след промяна в `prisma/schema.prisma` |
+| `npm run db:seed` | зарежда регистрите и цялото съдържание |
+| `npm run content:check` | проверява всички уроци и програми (без база) |
+| `npm run content:import [-- --force]` | импортира уроците в базата |
+| `npm run user:admin -- имейл "парола" "Име"` | създава или повишава администратор |
 
-## Learn More
+## Променливи на средата
 
-To learn more about Next.js, take a look at the following resources:
+Всички са описани в [`.env.example`](.env.example). **Файлът `.env` не се качва в git.**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Променлива | Задължителна | Описание |
+|---|---|---|
+| `DATABASE_URL` | да | връзка към PostgreSQL |
+| `APP_URL` | в продукция | публичният адрес — използва се в линковете в имейлите |
+| `ANTHROPIC_API_KEY` | за AI | ключ за Claude API; без него AI учителят показва, че не е конфигуриран |
+| `AI_MODEL` | не | по подразбиране `claude-opus-5-5` |
+| `AI_EFFORT` | не | `low` / `medium` / `high` |
+| `AI_DAILY_MESSAGES_PER_USER` | не | дневен лимит на съобщения за потребител (по подразбиране 60) |
+| `AI_MONTHLY_BUDGET_USD` | не | месечен бюджет за целия сайт; при достигането му AI спира |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | в продукция | изпращане на имейли |
+| `SHOW_UNVERIFIED_CONTENT` | не | `true` — учениците виждат и непроверени уроци (с ясен етикет); `false` — само проверени |
+| `CRON_SECRET` | за напомняния | таен ключ за `POST /api/cron/reminders` |
+| `ADMIN_EMAIL` | не | при `db:seed` този акаунт (ако съществува) получава роля администратор |
+| `EMAIL_DEV_OUTBOX` | не | `true` — писмата се записват в базата вместо да се изпращат (за тестове) |
+| `DATABASE_URL_TEST` | за тестове | отделна база за автоматичните тестове — **тя се изчиства** |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Първи администратор
 
-## Deploy on Vercel
+```bash
+npm run user:admin -- admin@училище.bg "дълга-сигурна-парола-1" "Иван Иванов"
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Ролите са: **Ученик**, **Студент**, **Преподавател**, **Редактор**, **Администратор**. Проверяват се на сървъра при всяко действие; промените на роли се записват в одит лога (`/admin/audit`).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Съдържание: формат на уроците
+
+Съдържанието живее в `content/` и се версионира в git:
+
+```
+content/
+  subjects.yaml            предмети
+  sources.yaml             източници (с дата на проверка)
+  curricula/**.yaml        учебни програми: раздели → теми
+  lessons/<предмет>/*.md   уроци
+  universities/, vocational/, driving/   официални регистри
+```
+
+Урокът е Markdown файл с YAML заглавна част:
+
+```markdown
+---
+slug: matematika-7-formuli-za-sakrateno-umnozhenie
+title: "Формули за съкратено умножение"
+curriculum: matematika-7            # програма
+topic: "Формули за съкратено умножение"   # точното заглавие на темата в програмата
+also: ["matematika-nvo-7|Цели изрази и формули за съкратено умножение"]   # по желание
+minutes: 30
+summary: "…"
+objectives: ["…"]
+keywords: ["…"]
+status: PENDING_REVIEW               # DRAFT | AI_GENERATED | PENDING_REVIEW | VERIFIED | PUBLISHED | OUTDATED
+origin: AI_ASSISTED                  # HUMAN_AUTHORED | AI_ASSISTED | AI_GENERATED | IMPORTED
+sources: [mon]                       # ключове от content/sources.yaml
+---
+
+# Въведение
+# Обяснение          (задължително)
+# Примери
+# Обобщение
+# Записки            (задължително — „тетрадката“)
+# Важно за запомняне
+# Формули
+# Чести грешки
+# План за устен отговор
+# Допълнително: …
+# Определения        (- **Термин** — определение → стават флашкарти)
+# Въпроси от учителя (## Въпрос + отговор)
+# Упражнения         (## Задача 1 (лесна) … ### Подсказка … ### Решение)
+# Тест               (поне 3 въпроса)
+```
+
+**Въпроси в теста** (`## Въпрос` под `# Тест`):
+
+| Тип | Как се пише |
+|---|---|
+| един верен | `- [x] верен` / `- [ ] грешен` |
+| няколко верни | няколко `- [x]` |
+| вярно/грешно | два отговора „Вярно“ и „Грешно“ |
+| попълни | в условието `\_\_\_`, после `Отговор: дума \| синоним` |
+| кратък отговор | `Отговор: …` |
+| число | `Число: 12,5 ± 0,1` |
+| свържи | `- ляво => дясно` |
+| отворен | `Критерии:` + списък, `Примерен отговор: …` |
+
+По желание: `Точки: 3`, `Трудност: 1–3`, обяснение с `> …`. Блокове: `:::definition[…]`, `:::tip`, `:::warning`, `:::example`, `:::remember`, `:::formula`, `:::note`. Математика: `$…$`, `$$…$$`, химия: `\ce{H2O}`.
+
+Винаги пускайте `npm run content:check` преди commit — проверката хваща непознати програми, теми, източници и грешки в тестовете.
+
+Шаблон за нов урок има в админ панела (**Админ → Уроци → Нов урок**).
+
+## Импорт
+
+От **Админ → Импорт**:
+
+- **Markdown уроци** (един или няколко `.md` файла във формата по-горе).
+- **JSON** — масив от уроци `{ "markdown": "…" }` или директно Markdown текстове.
+- **CSV въпроси** — колони: `lesson_slug, type, question, options, correct, explanation` (`type`: `single`, `multi`, `tf`, `numeric`, `short`; вариантите и верните отговори се разделят с `|`).
+- **CSV училища** — колони: `name, city, municipality, region, type, code` (`type`: „начално“, „основно“, „средно“, „профилирана гимназия“, „езикова гимназия“, „професионална гимназия“ …). Препоръчително е да се импортира официалният списък на МОН.
+- **Документи (PDF, DOCX, TXT)** — текстът се извлича и се създава **чернова** за редакция. Нищо не се публикува автоматично.
+
+Всяка редакция в админ панела създава версия на урока (история и връщане назад).
+
+## AI учител
+
+- Работи само от сървъра (`/api/ai/chat`, `/api/ai/quiz`); ключът никога не стига до браузъра.
+- Модел по подразбиране: `claude-opus-5-5`, със **server-side fallbacks** (`fallbacks: "default"`, beta `server-side-fallback-2026-07-01`) — при претоварване на основния модел API-то само превключва към резервен.
+- Лимити: дневен брой съобщения на потребител и месечен бюджет за сайта. Разходът (входящи/изходящи токени, цена) се записва за всяко съобщение и се вижда в **Админ → AI**.
+- Снимки на задачи се проверяват по съдържание (JPEG/PNG/WebP/GIF, до 5 MB) и **не се съхраняват**.
+- Подсказва на ученика как да стигне до решението, вместо само да дава отговора. Съобразява тона с възрастта, не иска лични данни и при сигнал за опасност насочва към възрастен, 112 или 116 111.
+
+## Тестове
+
+```bash
+# тестова база (изчиства се при всяко пускане!)
+sudo -u postgres psql -c "CREATE DATABASE bglearn_test OWNER bglearn;"
+echo 'DATABASE_URL_TEST="postgresql://bglearn:bglearn@localhost:5432/bglearn_test"' >> .env
+
+npm test                   # unit + интеграционни
+npm run build && npm run test:e2e    # e2e (Playwright, порт 3100)
+```
+
+Ако Playwright не намира браузър, задайте пътя: `PW_CHROMIUM_PATH=/път/до/chromium npm run test:e2e`.
+
+## Деплой в продукция
+
+1. PostgreSQL 14+ с разширение `pg_trgm` (миграциите го създават; потребителят трябва да има право).
+2. Задайте променливите от таблицата по-горе (`APP_URL`, SMTP, `CRON_SECRET`, по желание `ANTHROPIC_API_KEY`).
+3. ```bash
+   npm ci
+   npm run db:migrate
+   npm run db:seed
+   npm run build
+   npm start               # порт 3000; сложете reverse proxy с HTTPS отпред
+   ```
+4. Напомняния за преговор и изпити — веднъж на ден:
+   ```bash
+   curl -X POST -H "Authorization: Bearer $CRON_SECRET" "$APP_URL/api/cron/reminders"
+   ```
+5. Проверка на състоянието: `GET /api/health`.
+
+Сайтът задава защитни HTTP хедъри (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`). Бисквитката на сесията е `HttpOnly`, `SameSite=Lax` и `Secure` в продукция.
+
+## Архивиране
+
+```bash
+pg_dump -Fc "$DATABASE_URL" > bglearn-$(date +%F).dump          # архив
+pg_restore --clean -d "$DATABASE_URL" bglearn-2026-10-12.dump   # възстановяване
+```
+
+Учебното съдържание е в git (`content/`). Уроците, редактирани в админ панела, се пазят в базата заедно с версиите им — архивирайте базата редовно.
+
+## Сигурност и лични данни
+
+- Пароли — Argon2id; сесийни и имейл токени — само хеширани в базата.
+- Ограничаване на опитите (вход, регистрация, смяна на парола, AI) в базата.
+- Роли и права се проверяват на сървъра; административните действия влизат в одит лога.
+- Логът за грешки пази само съобщение, стек и път (без query string); не се записват пароли, токени и текстът на съобщенията.
+- Ученикът може да изтегли всичките си данни (JSON) и да изтрие профила си от **Настройки**.
+- При регистрация се пита за възрастова група; за деца под 14 г. е нужно съгласие на родител (GDPR и Закона за защита на личните данни).
+
+## Известни ограничения
+
+- **Уроците са 30** от 1260 теми; всички са създадени с помощта на AI и чакат преглед от преподавател. Останалите теми имат структура, но още нямат урок.
+- Сайтът на МОН (mon.bg) не беше достъпен при проверката на източниците, затова връзката към учебните програми е маркирана като **непроверена**. Структурата на програмите следва официалните предмети и класове, но конкретните теми трябва да се сверят с актуалните учебни програми.
+- Официалният списък на училищата трябва да се импортира от CSV (не е включен).
+- Данните за университетите и специалностите са от публичния регистър на НАЦИД; условията за прием (изпити, балообразуване, срокове) се публикуват от всеки университет поотделно и не са попълнени автоматично.
+- Шофьорските въпроси са **тренировъчни** — написани по официалните теми на ИААА, но не са официалните изпитни въпроси.
+- Методиката за изпитите на ИААА, по която е описан форматът на теоретичния изпит, е публикувана като **проект** — проверявайте актуалната версия.
+- Платформата не гарантира оценка „Отличен 6“ — тя помага да учите по-ефективно.
