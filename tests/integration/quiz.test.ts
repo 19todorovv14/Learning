@@ -48,6 +48,30 @@ describe.skipIf(!hasDb)("тестове и прогрес (интеграцио�
     expect(states.every((s) => s.lastCorrect === false)).toBe(true);
   });
 
+  it("празен изпит: 0%, неотговорените въпроси влизат в грешките, отвореният не остава „чакащ“", async () => {
+    const lesson = await db.lesson.findFirstOrThrow({ where: { questions: { some: { type: "OPEN" } } } });
+    const attempt = await startAttempt({ userId: user.id, scope: "LESSON", mode: "EXAM", lessonId: lesson.id });
+    const done = await submitAttempt(user.id, attempt.id, {});
+    expect(done.percent).toBe(0);
+    const answers = await db.assessmentAnswer.findMany({ where: { attemptId: attempt.id } });
+    expect(answers.every((a) => a.gradedBy !== "PENDING")).toBe(true);
+    const states = await db.userQuestionState.count({ where: { userId: user.id, questionId: { in: attempt.questionIds }, lastCorrect: false } });
+    expect(states).toBe(attempt.questionIds.length);
+  });
+
+  it("AI въпроси към урок не влизат в официалния тест на урока", async () => {
+    const lesson = await db.lesson.findFirstOrThrow({ where: { questions: { some: {} } } });
+    const ai = await db.question.create({
+      data: { type: "SINGLE_CHOICE", prompt: "AI въпрос", origin: "AI_GENERATED", status: "AI_GENERATED", lessonId: lesson.id },
+    });
+    try {
+      const attempt = await startAttempt({ userId: user.id, scope: "LESSON", mode: "PRACTICE", lessonId: lesson.id });
+      expect(attempt.questionIds).not.toContain(ai.id);
+    } finally {
+      await db.question.delete({ where: { id: ai.id } });
+    }
+  });
+
   it("чужд потребител не може да предаде опита", async () => {
     const lesson = await db.lesson.findFirstOrThrow();
     const attempt = await startAttempt({ userId: user.id, scope: "LESSON", mode: "EXAM", lessonId: lesson.id });

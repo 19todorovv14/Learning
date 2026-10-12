@@ -123,6 +123,13 @@ describe("gradeQuestion", () => {
     expect(gradeQuestion(q, { text: "отговор" }).gradedBy).toBe("PENDING");
     expect(gradeQuestion(q, { text: "отговор", rubricMet: [true, true, false] })).toMatchObject({ pointsAwarded: 2, gradedBy: "SELF_RUBRIC" });
   });
+
+  it("празен отворен въпрос носи 0 точки и не може да се самооцени", () => {
+    const q = { ...base, type: "OPEN" as const, points: 3, rubric: ["a", "b"] };
+    expect(gradeQuestion(q, undefined)).toMatchObject({ isCorrect: false, pointsAwarded: 0, gradedBy: "AUTO" });
+    expect(gradeQuestion(q, { text: "   " })).toMatchObject({ isCorrect: false, pointsAwarded: 0, gradedBy: "AUTO" });
+    expect(gradeQuestion(q, { text: "", rubricMet: [true, true] })).toMatchObject({ pointsAwarded: 0 });
+  });
 });
 
 describe("помощни", () => {

@@ -96,6 +96,7 @@ export const curriculumSchema = z
     track: z.enum(TRACKS),
     subject: str,
     grade: z.number().int().min(1).max(12).optional(),
+    gradeTo: z.number().int().min(1).max(12).optional(),
     variant: z.string().optional(),
     description: z.string().optional(),
     official: z.boolean().default(false),
@@ -114,7 +115,11 @@ export const curriculumSchema = z
       )
       .min(1),
   })
-  .strict();
+  .strict()
+  .refine((c) => c.gradeTo === undefined || (c.grade !== undefined && c.gradeTo > c.grade), {
+    message: "gradeTo изисква grade и трябва да е по-голям от него",
+    path: ["gradeTo"],
+  });
 export type CurriculumFile = z.infer<typeof curriculumSchema>;
 
 export const subjectSchema = z

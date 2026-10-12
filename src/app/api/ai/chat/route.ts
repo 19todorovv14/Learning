@@ -6,6 +6,7 @@ import { AIUnavailableError, assertAIAvailable, streamTutorReply } from "@/lib/a
 import { ACTION_PROMPTS, type TutorAction } from "@/lib/ai/prompts";
 import { validateImage } from "@/lib/ai/image";
 import { truncate } from "@/lib/utils";
+import { learnerStatuses } from "@/lib/data/visibility";
 
 const bodySchema = z.object({
   conversationId: z.string().max(40).optional(),
@@ -49,7 +50,8 @@ export async function POST(req: Request) {
   }
 
   let lessonId = body.lessonId ?? null;
-  if (lessonId && !(await db.lesson.findUnique({ where: { id: lessonId }, select: { id: true } }))) lessonId = null;
+  // Само видими за учениците уроци (непубликувано съдържание не се подава на AI)
+  if (lessonId && !(await db.lesson.findFirst({ where: { id: lessonId, status: { in: learnerStatuses() } }, select: { id: true } }))) lessonId = null;
 
   let conversationId = body.conversationId;
   if (conversationId) {

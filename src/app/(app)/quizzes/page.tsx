@@ -74,7 +74,7 @@ export default async function QuizzesPage() {
           <h2 className="section-title mb-3">Тестове по моите курсове</h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {myCourses.map((c) => (
-              <div key={c.id} className="card flex items-center justify-between gap-3 p-4">
+              <div key={c.id} className="card flex min-w-0 items-center justify-between gap-3 p-4">
                 <div className="min-w-0">
                   <div className="truncate font-medium">{c.title}</div>
                   <div className="text-xs text-muted">{c._count.questions} въпроса в банката</div>

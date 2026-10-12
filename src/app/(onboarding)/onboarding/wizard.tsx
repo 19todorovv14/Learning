@@ -84,6 +84,7 @@ export function OnboardingWizard(props: {
   categories: { code: string; name: string }[];
   subjects: { id: string; name: string; category: string; slug: string }[];
   subjectsByGrade: Record<number, string[]>;
+  examYears: number[];
 }) {
   const [step, setStep] = useState(0);
   const [d, setD] = useState<Initial>(props.initial);
@@ -297,7 +298,7 @@ export function OnboardingWizard(props: {
                 </label>
                 <select id="ty" className="input" value={d.targetExamYear ?? ""} onChange={(e) => set("targetExamYear", e.target.value ? Number(e.target.value) : null)}>
                   <option value="">—</option>
-                  {[2027, 2028, 2029, 2030].map((y) => (
+                  {props.examYears.map((y) => (
                     <option key={y} value={y}>
                       {y}
                     </option>

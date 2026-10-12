@@ -1,6 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { learnerStatuses } from "@/lib/data/visibility";
+import { curriculumForGrade } from "@/lib/data/grade-filter";
 import { parseSearchQuery, toPrefixTsQuery, type ParsedQuery } from "./parse";
 
 export type LessonHit = {
@@ -32,7 +33,9 @@ async function searchLessons(p: ParsedQuery, useSubject: boolean, useGrade: bool
     FROM "Lesson" l
     JOIN "Subject" s ON s.id = l."subjectId"
     WHERE l.status::text = ANY(${statuses})
-      AND (${grade}::int IS NULL OR l."gradeId" = ${grade}::int)
+      AND (${grade}::int IS NULL OR l."gradeId" = ${grade}::int OR EXISTS (
+        SELECT 1 FROM "CurriculumVersion" cv WHERE cv.id = l."curriculumVersionId" AND cv."gradeId" <= ${grade}::int AND cv."gradeTo" >= ${grade}::int
+      ))
       AND (${subject}::text IS NULL OR s.slug = ${subject}::text)
       AND (
         (${tsq} <> '' AND to_tsvector('simple', coalesce(l.title,'') || ' ' || coalesce(l.summary,'') || ' ' || bgl_join_text(l.keywords)) @@ to_tsquery('simple', ${tsq}))
@@ -71,7 +74,7 @@ export async function globalSearch(raw: string) {
       ? db.curriculumTopic.findMany({
           where: {
             OR: likeAny("title"),
-            ...(p.grade ? { section: { curriculumVersion: { gradeId: p.grade } } } : {}),
+            ...(p.grade ? { section: { curriculumVersion: { OR: curriculumForGrade(p.grade) } } } : {}),
           },
           take: 10,
           select: {

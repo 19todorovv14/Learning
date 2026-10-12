@@ -16,7 +16,7 @@ export default async function ErrorsPage() {
         {errors.map((e) => (
           <details key={e.id} className="card p-4">
             <summary className="cursor-pointer text-sm">
-              <span className="text-muted">{formatDateTime(e.createdAt)}</span> · <span className="font-medium">{e.message.slice(0, 160)}</span>
+              <span className="text-muted">{formatDateTime(e.createdAt)}</span> · <span className="font-medium break-all">{e.message.slice(0, 160)}</span>
               {e.path && <span className="text-muted"> · {e.path}</span>}
             </summary>
             {e.stack && <pre className="mt-3 overflow-x-auto rounded-lg bg-surface-2 p-3 text-xs">{e.stack}</pre>}

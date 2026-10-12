@@ -10,6 +10,17 @@ import {
   type SectionKind,
 } from "./types";
 
+/** Текстове от шаблона за нов урок — не бива да стигат до учениците. */
+const TEMPLATE_PLACEHOLDERS = [
+  /Кратко въведение: защо темата е важна/,
+  /Обяснение на прост език\. Използвай/,
+  /^\s*\*\*Пример 1\.\*\* …\s*$/m,
+  /^\s*-\s*…\s*$/m,
+  /^\s*(Условие|Решение|Отговор)\.\s*$/m,
+  /Въпрос с един верен отговор\?/,
+  /\bLorem ipsum\b/i,
+];
+
 export class ContentError extends Error {
   constructor(
     public file: string,
@@ -341,6 +352,17 @@ export function parseLessonFile(file: string, raw: string, defaultSlug: string):
   if (!sections.some((s) => s.kind === "EXPLANATION")) problems.push("Липсва задължителна секция „# Обяснение“");
   if (!sections.some((s) => s.kind === "NOTES")) problems.push("Липсва задължителна секция „# Записки“");
   if (meta.status !== "DRAFT" && questions.length < 3) problems.push(`Тестът трябва да има поне 3 въпроса (има ${questions.length})`);
+  if (meta.status !== "DRAFT") {
+    const all = [
+      ...sections.map((s) => s.body),
+      ...terms.map((t) => `${t.term} ${t.definition}`),
+      ...qa.map((q) => `${q.question}\n${q.answer}`),
+      ...exercises.map((e) => `${e.prompt}\n${e.solution}`),
+      ...questions.map((q) => q.prompt),
+    ].join("\n");
+    const hit = TEMPLATE_PLACEHOLDERS.find((r) => r.test(all));
+    if (hit) problems.push(`Урокът съдържа неподменен шаблонен текст (${hit.source}). Попълни го или остави статус DRAFT.`);
+  }
 
   if (problems.length) throw new ContentError(file, problems);
 

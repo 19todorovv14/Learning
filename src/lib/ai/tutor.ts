@@ -40,7 +40,8 @@ export async function assertAIAvailable(userId: string) {
   if (!burst.ok) throw new AIUnavailableError("BURST_LIMIT", "Пишеш много бързо 🙂 Изчакай няколко секунди.");
 
   const since = new Date(Date.now() - 24 * 3600_000);
-  const today = await db.aIUsageRecord.count({ where: { userId, createdAt: { gte: since }, status: { not: "RATE_LIMITED" } } });
+  // В дневния лимит влизат само успешните отговори — грешки на услугата не изяждат лимита на ученика
+  const today = await db.aIUsageRecord.count({ where: { userId, createdAt: { gte: since }, status: { in: ["OK", "REFUSAL"] } } });
   if (today >= cfg.dailyMessagesPerUser) {
     await recordUsage({ userId, purpose: "limit", model: cfg.model, status: "RATE_LIMITED" });
     throw new AIUnavailableError(

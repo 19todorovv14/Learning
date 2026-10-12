@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { jsonError, sameOrigin } from "@/lib/http";
 import { AIUnavailableError, describeAIError, generateAIQuiz } from "@/lib/ai/tutor";
 import { logError } from "@/lib/audit";
+import { learnerStatuses } from "@/lib/data/visibility";
 
 const bodySchema = z.object({
   topic: z.string().trim().min(2).max(200),
@@ -19,10 +20,14 @@ export async function POST(req: Request) {
   if (!user) return jsonError(401, "Влез в профила си.");
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return jsonError(400, "Невалидна заявка.");
-  const { topic, lessonId, count } = parsed.data;
+  const { topic, count } = parsed.data;
+  // Само видим урок; иначе тестът е по свободна тема
+  const lessonId = parsed.data.lessonId
+    ? ((await db.lesson.findFirst({ where: { id: parsed.data.lessonId, status: { in: learnerStatuses() } }, select: { id: true } }))?.id ?? null)
+    : null;
 
   try {
-    const questions = await generateAIQuiz(user.id, topic, lessonId ?? null, count);
+    const questions = await generateAIQuiz(user.id, topic, lessonId, count);
     if (!questions.length) return jsonError(502, "Не успях да съставя тест. Опитай с по-конкретна тема.");
     const attempt = await db.$transaction(async (tx) => {
       const ids: string[] = [];
@@ -34,7 +39,7 @@ export async function POST(req: Request) {
             explanation: q.explanation,
             origin: "AI_GENERATED",
             status: "AI_GENERATED",
-            lessonId: lessonId ?? null,
+            lessonId,
             order: i,
             options: { create: q.options.map((text, oi) => ({ text, isCorrect: oi === q.correctIndex, order: oi })) },
           },
@@ -47,7 +52,7 @@ export async function POST(req: Request) {
           scope: "CUSTOM",
           mode: "PRACTICE",
           title: `AI тест: ${topic}`,
-          lessonId: lessonId ?? null,
+          lessonId,
           questionIds: ids,
         },
       });

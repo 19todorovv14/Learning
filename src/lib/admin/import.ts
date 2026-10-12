@@ -196,8 +196,7 @@ export async function importDocumentAsDraft(file: File, curriculumSlug: string, 
   const title = file.name.replace(/\.[^.]+$/, "").slice(0, 120);
   const slug = `${curriculumSlug}-${slugify(title)}-${Date.now().toString(36)}`.slice(0, 95);
   const md = lessonTemplate(curriculumSlug, topicTitle, slug, title)
-    .replace(/# Обяснение\n\n[^\n]*\n/, `# Обяснение\n\n${text.replace(/^#+ /gm, "### ")}\n`)
-    .replace("status: DRAFT", "status: DRAFT");
+    .replace(/# Обяснение\n\n[^\n]*\n/, `# Обяснение\n\n${text.replace(/^#+ /gm, "### ")}\n`);
   try {
     const parsed = parseLessonFile(file.name, md, slug);
     await saveParsedLesson(db, parsed, md, { source: "admin", actorId, changeNote: `Чернова от документ ${file.name}` });

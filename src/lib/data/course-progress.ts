@@ -1,6 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { lessonStatusFilter } from "./learning";
+import { curriculumForGrade } from "./grade-filter";
 
 /**
  * Прогрес по курс = усвоени уроци / всички публикувани уроци в курса.
@@ -33,7 +34,7 @@ export async function getMyCourses(userId: string) {
   const courses = await db.curriculumVersion.findMany({
     where: {
       OR: [
-        { subjectId: { in: subjectIds }, ...(profile?.grade ? { OR: [{ gradeId: profile.grade }, { gradeId: null }] } : {}) },
+        { subjectId: { in: subjectIds }, ...(profile?.grade ? { OR: [...curriculumForGrade(profile.grade), { gradeId: null }] } : {}) },
         // курсове, по които ученикът вече е учил
         { lessons: { some: { progress: { some: { userId } } } } },
       ],

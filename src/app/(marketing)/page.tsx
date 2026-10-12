@@ -64,7 +64,7 @@ const PATHS = [
 export default async function HomePage() {
   const [lessons, questions, programs, demo] = await Promise.all([
     db.lesson.count({ where: { status: lessonStatusFilter() } }),
-    db.question.count({ where: { lesson: { status: lessonStatusFilter() } } }),
+    db.question.count({ where: { lesson: { status: lessonStatusFilter() }, origin: { not: "AI_GENERATED" } } }),
     db.program.count(),
     db.lesson.findFirst({ where: { isDemo: true, status: lessonStatusFilter() }, orderBy: { createdAt: "asc" }, select: { slug: true, title: true, summary: true, gradeId: true, subject: { select: { name: true } } } }),
   ]);

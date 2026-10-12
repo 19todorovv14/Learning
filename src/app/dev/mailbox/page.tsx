@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth/session";
+import { hasRole } from "@/lib/auth/guards";
 import { formatDateTime } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Dev пощенска кутия", robots: { index: false } };
@@ -8,8 +10,17 @@ export const dynamic = "force-dynamic";
 
 /** Само в development: писмата, които биха били изпратени без SMTP. */
 export default async function DevMailbox() {
-  if (process.env.NODE_ENV === "production" && process.env.EMAIL_DEV_OUTBOX !== "true") notFound();
-  const mails = await db.devEmail.findMany({ orderBy: { createdAt: "desc" }, take: 30 });
+  const isProd = process.env.NODE_ENV === "production";
+  if (isProd && process.env.EMAIL_DEV_OUTBOX !== "true") notFound();
+  // В production (тестова среда с EMAIL_DEV_OUTBOX) всеки вижда само своите писма — в тях има линкове за вход.
+  const user = isProd ? await getCurrentUser() : null;
+  if (isProd && !user) notFound();
+  const onlyOwn = isProd && !hasRole(user, "ADMIN");
+  const mails = await db.devEmail.findMany({
+    where: onlyOwn ? { to: user!.email } : {},
+    orderBy: { createdAt: "desc" },
+    take: 30,
+  });
   return (
     <main id="main" className="mx-auto max-w-3xl px-5 py-10">
       <h1 className="text-2xl font-semibold">Dev пощенска кутия</h1>

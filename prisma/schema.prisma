@@ -560,6 +560,7 @@ model CurriculumVersion {
   track                  Track
   subjectId              String
   gradeId                Int?
+  gradeTo                Int? // последен клас при програми за няколко класа (напр. ИТ 5.–7.)
   variant                String? // ООП, ПП, ДЗИ, НВО, категория B …
   vocationalProfessionId String?
   vocationalSpecialtyId  String?

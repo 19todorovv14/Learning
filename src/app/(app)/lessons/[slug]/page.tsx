@@ -376,16 +376,23 @@ export default async function LessonPage({ params, searchParams }: PageProps<"/l
               {ORIGIN_LABEL[lesson.origin]} · версия {lesson.version} · обновен на {formatDate(lesson.updatedAt)}
               {lesson.authorName ? ` · автор: ${lesson.authorName}` : ""}
             </p>
-            {lesson.sources.length > 0 && (
+            {lesson.sources.length > 0 ? (
               <ul className="mt-2 space-y-1">
                 {lesson.sources.map(({ source }) => (
                   <li key={source.id}>
                     <a href={source.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">
                       {source.organization} — {source.title} <ExternalLink className="h-3 w-3" />
                     </a>
+                    <span className="ml-1 text-xs">
+                      {source.freshness === "CURRENT" && source.verifiedAt
+                        ? `(проверен на ${formatDate(source.verifiedAt)})`
+                        : "(линкът не е проверен)"}
+                    </span>
                   </li>
                 ))}
               </ul>
+            ) : (
+              <p className="mt-2">Няма посочен външен източник — проверявай важните факти в учебника.</p>
             )}
             <p className="mt-2">
               Обясненията са оригинални и не копират учебници. Използвай ги заедно с учебника, по който учиш.

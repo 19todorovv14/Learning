@@ -102,7 +102,8 @@ function textMatches(given: string, accepted: string[]) {
 export function gradeQuestion(q: QuestionForGrading, r: QuizResponse | undefined): GradeResult {
   const max = q.points;
   const none: GradeResult = { isCorrect: false, pointsAwarded: 0, maxPoints: max, gradedBy: "AUTO" };
-  if (!r) return q.type === "OPEN" ? { ...none, isCorrect: null, gradedBy: "PENDING" } : none;
+  // Без отговор = 0 точки за всеки тип (включително отворен въпрос с празен текст)
+  if (!r) return none;
 
   switch (q.type) {
     case "SINGLE_CHOICE":
@@ -150,6 +151,8 @@ export function gradeQuestion(q: QuestionForGrading, r: QuizResponse | undefined
       };
     }
     case "OPEN": {
+      // Празен отговор не може да бъде самооценен с точки
+      if (!r.text?.trim()) return none;
       if (!r.rubricMet || !q.rubric.length) return { isCorrect: null, pointsAwarded: 0, maxPoints: max, gradedBy: "PENDING" };
       const met = q.rubric.filter((_, i) => r.rubricMet?.[i]).length;
       return {

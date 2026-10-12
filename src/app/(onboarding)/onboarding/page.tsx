@@ -20,15 +20,23 @@ export default async function OnboardingPage() {
     db.university.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, shortName: true, city: true } }),
     db.faculty.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, universityId: true } }),
     db.drivingCategory.findMany({ orderBy: { order: "asc" }, select: { code: true, name: true } }),
-    db.curriculumVersion.findMany({ where: { gradeId: { not: null } }, select: { gradeId: true, subjectId: true } }),
+    db.curriculumVersion.findMany({ where: { gradeId: { not: null } }, select: { gradeId: true, gradeTo: true, subjectId: true } }),
     db.subject.findMany({ orderBy: { order: "asc" }, select: { id: true, name: true, category: true, slug: true } }),
     db.userSubject.findMany({ where: { userId: user.id }, select: { subjectId: true } }),
   ]);
 
+  // Кандидатстване: от следващата кампания (след юли — от следващата година) напред
+  const now = new Date();
+  const firstYear = now.getMonth() >= 7 ? now.getFullYear() + 1 : now.getFullYear();
+  const examYears = Array.from({ length: 5 }, (_, i) => firstYear + i);
+
   const subjectsByGrade: Record<number, string[]> = {};
   for (const c of curricula) {
     if (!c.gradeId) continue;
-    (subjectsByGrade[c.gradeId] ??= []).push(c.subjectId);
+    for (let g = c.gradeId; g <= (c.gradeTo ?? c.gradeId); g++) {
+      const list = (subjectsByGrade[g] ??= []);
+      if (!list.includes(c.subjectId)) list.push(c.subjectId);
+    }
   }
 
   return (
@@ -63,6 +71,7 @@ export default async function OnboardingPage() {
       categories={categories}
       subjects={subjects}
       subjectsByGrade={subjectsByGrade}
+      examYears={examYears}
     />
   );
 }

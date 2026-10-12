@@ -1,16 +1,8 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import { getCurrentUser, type SessionUser } from "./session";
+import { audit } from "@/lib/audit";
 import type { Role } from "@/generated/prisma/enums";
-
-export class AuthError extends Error {
-  constructor(
-    public code: "UNAUTHENTICATED" | "FORBIDDEN",
-    message = code === "UNAUTHENTICATED" ? "Трябва да влезете в профила си." : "Нямате права за това действие.",
-  ) {
-    super(message);
-  }
-}
 
 const ROLE_RANK: Record<Role, number> = {
   STUDENT: 0,
@@ -39,15 +31,22 @@ export async function requireRolePage(minimum: Role, next?: string): Promise<Ses
   return user;
 }
 
-/** За server actions и API: хвърля AuthError. */
+/**
+ * За server actions: без вход → пренасочване към /login.
+ * (Пренасочването е нормален отговор за Next.js — не 500 и не запис в лога за грешки.)
+ */
 export async function requireUser(): Promise<SessionUser> {
   const user = await getCurrentUser();
-  if (!user) throw new AuthError("UNAUTHENTICATED");
+  if (!user) redirect("/login");
   return user;
 }
 
+/** За server actions с минимална роля: опитът без права се записва в одит лога и се отказва. */
 export async function requireRole(minimum: Role): Promise<SessionUser> {
   const user = await requireUser();
-  if (!hasRole(user, minimum)) throw new AuthError("FORBIDDEN");
+  if (!hasRole(user, minimum)) {
+    await audit(user.id, "auth.forbidden", "Role", minimum, { role: user.role });
+    redirect("/dashboard?forbidden=1");
+  }
   return user;
 }

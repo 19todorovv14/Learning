@@ -1,9 +1,12 @@
 import { expect, type Page } from "@playwright/test";
+import { query } from "./db";
 
 export const PASSWORD = "ТестоваПарола2026";
 
 export async function register(page: Page, opts: { name?: string; email?: string } = {}) {
   const email = opts.email ?? `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@example.bg`;
+  // Всички e2e регистрации идват от един IP — нулираме лимита за регистрации (8 на час), за да не се блокират тестовете
+  await query(`delete from "RateLimitBucket" where key like 'register:%'`);
   await page.goto("/register");
   await page.getByLabel("Име (както искаш да те наричаме)").fill(opts.name ?? "Мария");
   await page.getByLabel("Имейл").fill(email);

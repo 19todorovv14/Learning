@@ -35,6 +35,16 @@ const schema = z.object({
 
 export type OnboardingData = z.input<typeof schema>;
 
+const LANGUAGE_SUBJECTS: Record<string, string> = {
+  Английски: "angliyski-ezik",
+  Немски: "nemski-ezik",
+  Френски: "frenski-ezik",
+  Испански: "ispanski-ezik",
+  Руски: "ruski-ezik",
+  Италиански: "italianski-ezik",
+  Китайски: "kitayski-ezik",
+};
+
 export async function saveOnboardingAction(input: OnboardingData) {
   const user = await requireUser();
   const parsed = schema.safeParse(input);
@@ -52,7 +62,12 @@ export async function saveOnboardingAction(input: OnboardingData) {
     schoolId = existing?.id ?? (await db.school.create({ data: { name: d.schoolNameCustom, city, submittedById: user.id } })).id;
   }
 
-  const validSubjects = await db.subject.findMany({ where: { id: { in: d.subjectIds } }, select: { id: true } });
+  // Избраните чужди езици се добавят и като предмети (ако има такъв предмет в платформата)
+  const languageSlugs = d.foreignLanguages.map((l) => LANGUAGE_SUBJECTS[l]).filter((x): x is string => !!x);
+  const validSubjects = await db.subject.findMany({
+    where: { OR: [{ id: { in: d.subjectIds } }, { slug: { in: languageSlugs } }] },
+    select: { id: true },
+  });
 
   const profile = {
     learnerType: d.learnerType,

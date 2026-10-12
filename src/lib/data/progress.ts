@@ -2,6 +2,7 @@ import "server-only";
 import { db } from "@/lib/db";
 import { TZ } from "@/lib/utils";
 import { lessonStatusFilter } from "./learning";
+import { lessonForGrade } from "./grade-filter";
 
 const DAY = 24 * 3600_000;
 
@@ -20,21 +21,28 @@ export async function getWeeklyActivity(userId: string) {
     }),
     db.lessonProgress.count({ where: { userId, completedAt: { gte: since } } }),
   ]);
-  const days: { day: string; label: string; minutes: number }[] = [];
+  const days: { day: string; label: string; minutes: number; active: boolean }[] = [];
   const fmt = new Intl.DateTimeFormat("bg-BG", { timeZone: TZ, weekday: "short" });
   for (let i = 6; i >= 0; i--) {
     const d = new Date(Date.now() - i * DAY);
-    days.push({ day: sofiaDay(d), label: fmt.format(d), minutes: 0 });
+    days.push({ day: sofiaDay(d), label: fmt.format(d), minutes: 0, active: false });
   }
   for (const s of sessions) {
-    const k = sofiaDay(s.startedAt);
-    const row = days.find((d) => d.day === k);
-    if (row) row.minutes += s.durationSec / 60;
+    const row = days.find((d) => d.day === sofiaDay(s.startedAt));
+    if (row) {
+      row.minutes += s.durationSec / 60;
+      row.active = true;
+    }
+  }
+  // Ден е активен и когато ученикът е предал тест (дори кратък)
+  for (const a of attempts) {
+    const row = a.submittedAt ? days.find((d) => d.day === sofiaDay(a.submittedAt!)) : undefined;
+    if (row) row.active = true;
   }
   const totalMinutes = Math.round(days.reduce((n, d) => n + d.minutes, 0));
-  const activeDays = days.filter((d) => d.minutes >= 1).length;
+  const activeDays = days.filter((d) => d.active).length;
   const avgScore = attempts.length ? attempts.reduce((n, a) => n + (a.percent ?? 0), 0) / attempts.length : null;
-  return { days: days.map((d) => ({ ...d, minutes: Math.round(d.minutes) })), totalMinutes, activeDays, quizzes: attempts.length, avgScore, completed };
+  return { days: days.map(({ day, label, minutes }) => ({ day, label, minutes: Math.round(minutes) })), totalMinutes, activeDays, quizzes: attempts.length, avgScore, completed };
 }
 
 export async function getContinueLearning(userId: string, take = 3) {
@@ -107,7 +115,7 @@ export async function getRecommendedLessons(userId: string, take = 4) {
       status: lessonStatusFilter(),
       id: { notIn: seenIds },
       ...(subjects.length ? { subjectId: { in: subjects.map((s) => s.subjectId) } } : {}),
-      ...(profile?.grade ? { OR: [{ gradeId: profile.grade }, { gradeId: null }] } : {}),
+      ...(profile?.grade ? { OR: [...lessonForGrade(profile.grade), { gradeId: null }] } : {}),
     },
     orderBy: [{ curriculumVersionId: "asc" }, { order: "asc" }],
     take,

@@ -26,7 +26,8 @@ export async function startAttempt(input: StartInput) {
   if (input.scope === "LESSON") {
     const lesson = await db.lesson.findFirst({
       where: { id: input.lessonId, status: { in: statuses } },
-      select: { id: true, title: true, questions: { where: { status: { not: "DRAFT" } }, orderBy: { order: "asc" }, select: { id: true } } },
+      // AI тестовете на отделни ученици не влизат в официалния тест на урока
+      select: { id: true, title: true, questions: { where: { status: { not: "DRAFT" }, origin: { not: "AI_GENERATED" } }, orderBy: { order: "asc" }, select: { id: true } } },
     });
     if (!lesson) throw new QuizError("Урокът не е намерен.");
     questionIds = lesson.questions.map((q) => q.id);
@@ -47,6 +48,7 @@ export async function startAttempt(input: StartInput) {
         driving: input.drivingCategory ? { categoryCodes: { has: input.drivingCategory } } : { isNot: null },
         type: { not: "OPEN" },
         status: { not: "DRAFT" },
+        lesson: { status: { in: statuses } },
       },
       select: { id: true },
     });
@@ -143,8 +145,9 @@ export async function submitAttempt(userId: string, attemptId: string, responses
       })),
       skipDuplicates: true,
     });
-    for (const { q, r, g } of answers) {
-      if (g.isCorrect === null || !r) continue;
+    for (const { q, g } of answers) {
+      // Неотговорените въпроси се броят за грешни — така влизат в „Преговор на грешките“
+      if (g.isCorrect === null) continue;
       await tx.userQuestionState.upsert({
         where: { userId_questionId: { userId, questionId: q.id } },
         create: {

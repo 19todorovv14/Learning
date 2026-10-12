@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { requireRolePage } from "@/lib/auth/guards";
 import { Stat } from "@/components/ui/misc";
 import { isAIConfigured, aiConfig } from "@/lib/ai/config";
+import { isEmailConfigured } from "@/lib/email";
 
 export const metadata: Metadata = { title: "Администрация" };
 
@@ -23,9 +24,26 @@ export default async function AdminHome() {
   ]);
   const st = (s: string) => byStatus.find((b) => b.status === s)?._count ?? 0;
   const cfg = aiConfig();
+  // Настройки, без които част от функциите не работят — показват се на администратора
+  const missing = [
+    !isEmailConfigured() && "SMTP_HOST — без него писмата за потвърждение и смяна на парола не се изпращат.",
+    !process.env.CRON_SECRET && "CRON_SECRET — без него напомнянията по имейл (/api/cron/reminders) са изключени.",
+    !isAIConfigured() && "ANTHROPIC_API_KEY — без него AI учителят и AI тестовете са изключени.",
+    !process.env.APP_URL && "APP_URL — линковете в имейлите няма да сочат към правилния адрес.",
+  ].filter((x): x is string => !!x);
   return (
     <>
       <h1 className="mb-6 text-2xl font-semibold tracking-tight">Табло</h1>
+      {missing.length > 0 && (
+        <div role="status" className="mb-6 rounded-xl border border-warning bg-warning-soft p-4 text-sm">
+          <div className="font-medium">Липсващи настройки на сървъра</div>
+          <ul className="mt-1 list-disc pl-5">
+            {missing.map((m) => (
+              <li key={m}>{m}</li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="Потребители" value={users} hint={`+${newUsers} за 7 дни`} />
         <Stat label="Уроци (всички)" value={byStatus.reduce((n, b) => n + b._count, 0)} hint={`${questions} въпроса`} />

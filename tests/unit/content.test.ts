@@ -26,13 +26,13 @@ ${fm}---
 
 ## Какво е?
 
-Отговор.
+Това е понятие.
 
 # Упражнения
 
 ## Задача 1 (трудна)
 
-Условие.
+Пресметни 2 + 2.
 
 ### Подсказка
 
@@ -40,7 +40,7 @@ ${fm}---
 
 ### Решение
 
-Решение.
+2 + 2 = 4.
 
 # Тест
 
@@ -84,7 +84,7 @@ describe("parseLessonFile", () => {
     expect(l.sections.map((s) => s.kind)).toEqual(["EXPLANATION", "NOTES"]);
     expect(l.terms).toHaveLength(2);
     expect(l.qa[0].question).toBe("Какво е?");
-    expect(l.exercises[0]).toMatchObject({ difficulty: 3, hint: "Мисли.", solution: "Решение." });
+    expect(l.exercises[0]).toMatchObject({ difficulty: 3, hint: "Мисли.", solution: "2 + 2 = 4." });
     expect(l.questions.map((q) => q.type)).toEqual(["SINGLE_CHOICE", "TRUE_FALSE", "FILL_BLANK", "NUMERIC", "MATCHING", "OPEN"]);
     expect(l.questions[0].explanation).toBe("Защото.");
     expect(l.questions[3]).toMatchObject({ numericAnswer: 0.25, numericTolerance: 0.001 });

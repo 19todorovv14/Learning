@@ -104,6 +104,7 @@ export async function importContent(
       track: c.track,
       subjectId,
       gradeId: c.grade ?? null,
+      gradeTo: c.gradeTo ?? null,
       variant: c.variant ?? null,
       description: c.description ?? null,
       isOfficialStructure: c.official,

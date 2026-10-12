@@ -3,6 +3,7 @@ import { cache } from "react";
 import { db } from "@/lib/db";
 import { learnerStatuses, ALL_STATUSES } from "./visibility";
 import type { Track } from "@/generated/prisma/enums";
+import { curriculumForGrade, lessonForGrade } from "./grade-filter";
 
 export const SUBJECT_CATEGORY_LABEL: Record<string, string> = {
   LANGUAGE_LITERATURE: "Български език и литература",
@@ -100,7 +101,7 @@ export const getCurriculumBySlug = cache(async (slug: string, isEditor = false) 
 
 export const getGradeOverview = cache(async (grade: number) => {
   return db.curriculumVersion.findMany({
-    where: { gradeId: grade },
+    where: { OR: curriculumForGrade(grade) },
     orderBy: [{ subject: { order: "asc" } }, { order: "asc" }],
     include: {
       subject: true,
@@ -123,7 +124,7 @@ export const getLessonBySlug = cache(async (slug: string, isEditor = false) => {
       teacherQuestions: { orderBy: { order: "asc" } },
       exercises: { orderBy: { order: "asc" } },
       sources: { include: { source: true } },
-      _count: { select: { questions: true } },
+      _count: { select: { questions: { where: { origin: { not: "AI_GENERATED" } } } } },
     },
   });
   if (!lesson) return null;
@@ -154,7 +155,7 @@ export async function getLibraryLessons(filters: { subject?: string; grade?: num
   const where = {
     status: lessonStatusFilter(),
     ...(filters.subject ? { subject: { slug: filters.subject } } : {}),
-    ...(filters.grade ? { gradeId: filters.grade } : {}),
+    ...(filters.grade ? { OR: lessonForGrade(filters.grade) } : {}),
     ...(filters.track ? { curriculumVersion: { track: filters.track } } : {}),
   };
   const [items, total] = await Promise.all([
