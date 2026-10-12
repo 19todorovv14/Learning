@@ -137,8 +137,10 @@ export function gradeQuestion(q: QuestionForGrading, r: QuizResponse | undefined
       const pairs = q.matchingPairs ?? [];
       if (!pairs.length) return none;
       let good = 0;
-      pairs.forEach((_, i) => {
-        if (r.matches?.[String(i)] === i) good++;
+      // Сравнява се по текста на десния елемент — два леви елемента може да имат един и същ отговор.
+      pairs.forEach((p, i) => {
+        const chosen = r.matches?.[String(i)];
+        if (chosen !== undefined && pairs[chosen]?.right === p.right) good++;
       });
       return {
         isCorrect: good === pairs.length,

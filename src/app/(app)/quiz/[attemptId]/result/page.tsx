@@ -166,7 +166,7 @@ export default async function ResultPage({ params }: PageProps<"/quiz/[attemptId
                 <ul className="mt-3 space-y-1 text-[15px]">
                   {pairs.map((p, pi) => {
                     const chosen = r.matches?.[String(pi)];
-                    const ok = chosen === pi;
+                    const ok = chosen !== undefined && pairs[chosen]?.right === p.right;
                     return (
                       <li key={pi} className={`rounded-lg px-3 py-1.5 ${ok ? "bg-success-soft" : "bg-danger-soft"}`}>
                         {p.left.replace(/\$/g, "")} → {chosen !== undefined ? pairs[chosen]?.right.replace(/\$/g, "") : "—"}

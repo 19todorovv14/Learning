@@ -27,8 +27,9 @@ export default async function QuizPage({ params }: PageProps<"/quiz/[attemptId]"
       points: q.points,
       options: q.type === "TRUE_FALSE" ? options : seededShuffle(options, attempt.id + q.id),
       matchLeft: pairs.map((p) => p.left),
+      // Еднаквите десни отговори се показват веднъж (напр. две понятия с един и същ отговор).
       matchRight: seededShuffle(
-        pairs.map((p, i) => ({ index: i, text: p.right })),
+        pairs.map((p, i) => ({ index: i, text: p.right })).filter((r, i, all) => all.findIndex((x) => x.text === r.text) === i),
         attempt.id + q.id,
       ),
       rubricCount: q.rubric.length,

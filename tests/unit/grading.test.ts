@@ -102,6 +102,22 @@ describe("gradeQuestion", () => {
     expect(gradeQuestion(q, { matches: { "0": 1, "1": 1 } })).toMatchObject({ isCorrect: false, pointsAwarded: 2 });
   });
 
+  it("matching: еднакви десни отговори се сравняват по текст", () => {
+    const q = {
+      ...base,
+      type: "MATCHING" as const,
+      points: 3,
+      matchingPairs: [
+        { left: "yesterday", right: "Past Simple" },
+        { left: "never", right: "Present Perfect" },
+        { left: "ago", right: "Past Simple" },
+      ],
+    };
+    // Интерфейсът показва „Past Simple“ веднъж (с индекс 0) — изборът му и за двата реда е верен.
+    expect(gradeQuestion(q, { matches: { "0": 0, "1": 1, "2": 0 } })).toMatchObject({ isCorrect: true, pointsAwarded: 3 });
+    expect(gradeQuestion(q, { matches: { "0": 1, "1": 1, "2": 2 } })).toMatchObject({ isCorrect: false, pointsAwarded: 2 });
+  });
+
   it("отворен въпрос: чака самооценка, после точки по критерии", () => {
     const q = { ...base, type: "OPEN" as const, points: 3, rubric: ["a", "b", "c"] };
     expect(gradeQuestion(q, { text: "отговор" }).gradedBy).toBe("PENDING");
