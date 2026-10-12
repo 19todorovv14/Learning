@@ -5,6 +5,7 @@ import remarkDirective from "remark-directive";
 import rehypeKatex from "rehype-katex";
 import "katex/contrib/mhchem";
 import { remarkCallouts } from "./remark-callouts";
+import { normalizeDisplayMath } from "./normalize-math";
 import { cn } from "@/lib/utils";
 
 const remarkPlugins = [remarkGfm, [remarkMath, { singleDollarTextMath: true }], remarkDirective, remarkCallouts] as const;
@@ -35,7 +36,7 @@ export function Markdown({ children, className }: { children: string; className?
           ),
         }}
       >
-        {children}
+        {normalizeDisplayMath(children)}
       </ReactMarkdown>
     </div>
   );

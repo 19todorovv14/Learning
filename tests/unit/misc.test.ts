@@ -5,6 +5,7 @@ import { generateToken, hashToken } from "@/lib/auth/crypto";
 import { validateImage } from "@/lib/ai/image";
 import { estimateCostMicroUsd } from "@/lib/ai/config";
 import { registerSchema, passwordSchema } from "@/lib/validation";
+import { normalizeDisplayMath } from "@/components/markdown/normalize-math";
 
 describe("търсене на естествен език", () => {
   it("разпознава клас, предмет и намерение", () => {
@@ -80,5 +81,17 @@ describe("разходи за AI", () => {
     // 1M входни ($4) + 100k изходни ($2) = $6
     expect(estimateCostMicroUsd("claude-opus-5-5", { input: 1_000_000, output: 100_000, cacheRead: 0, cacheWrite: 0 })).toBe(6_000_000);
     expect(estimateCostMicroUsd("непознат-модел", { input: 1_000_000, output: 0, cacheRead: 0, cacheWrite: 0 })).toBe(4_000_000);
+  });
+});
+
+describe("normalizeDisplayMath", () => {
+  it("превръща ред с $$…$$ в блокова формула", () => {
+    const out = normalizeDisplayMath(":::formula[Т]\n$$a^2 + b^2 = c^2$$\n**текст**\n:::");
+    expect(out).toBe(":::formula[Т]\n\n$$\na^2 + b^2 = c^2\n$$\n\n**текст**\n:::");
+  });
+  it("не пипа вградени формули и кодови блокове", () => {
+    expect(normalizeDisplayMath("Текст $x$ и $$y$$ в изречение.")).toBe("Текст $x$ и $$y$$ в изречение.");
+    const code = "```\n$$x$$\n```";
+    expect(normalizeDisplayMath(code)).toBe(code);
   });
 });
