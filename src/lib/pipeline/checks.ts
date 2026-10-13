@@ -3,7 +3,8 @@ import type { PipelineCheckResult } from "@/generated/prisma/enums";
 import type { LessonDraft } from "@/lib/ai/lesson-generator";
 import { TEMPLATE_PLACEHOLDERS } from "@/lib/content/parse-lesson";
 import { logEvent } from "./queue";
-import { detectLanguage, extractNumbers, normalizeForMatch, quoteFound, verbatimOverlap, yearContextConflicts } from "./text";
+import { sourceAuthority } from "@/lib/content/source-authority";
+import { detectLanguage, extractNumbers, normalizeForMatch, quoteFound, readability, readabilityLimits, verbatimOverlap, yearContextConflicts } from "./text";
 
 /**
  * Автоматични проверки на урок от pipeline-а. Изпълняват се върху текущото съдържание на урока в базата
@@ -23,6 +24,8 @@ export const CHECK_LABELS: Record<string, string> = {
   copying: "Дословно копиране",
   license: "Лиценз и авторство",
   sources: "Връзка с източниците",
+  authority: "Официален / справочен източник",
+  readability: "Четивност за класа (евристика)",
 };
 
 const out = (kind: string, result: PipelineCheckResult, message: string, details?: Prisma.InputJsonValue): CheckOutcome => ({
@@ -38,7 +41,10 @@ async function loadForChecks(db: PrismaClient, itemId: string) {
     where: { id: itemId },
     include: {
       topic: { include: { section: { include: { curriculumVersion: true } } } },
-      documents: { orderBy: { rank: "asc" }, include: { document: { include: { chunks: { orderBy: { index: "asc" } } } } } },
+      documents: {
+        orderBy: { rank: "asc" },
+        include: { document: { include: { chunks: { orderBy: { index: "asc" } }, source: { select: { type: true, title: true, organization: true } } } } },
+      },
       lesson: {
         include: {
           sections: { orderBy: { order: "asc" } },
@@ -217,6 +223,31 @@ function checkSourceLinks(l: LessonT, docs: Docs): CheckOutcome {
   return out("sources", primaryMissing ? "FAIL" : "WARN", `Урокът не е свързан с: ${missing.map((d) => d.document.title).join(", ")}`);
 }
 
+function checkAuthority(docs: Docs): CheckOutcome {
+  const official = docs.filter((d) => sourceAuthority(d.document.source.type) === "official");
+  if (!docs.length) return out("authority", "FAIL", "Няма източници");
+  if (official.length)
+    return out("authority", "PASS", `Официални документи: ${official.map((d) => d.document.title).join(", ")}`);
+  const orgs = [...new Set(docs.map((d) => d.document.source.organization))].join(", ");
+  return out(
+    "authority",
+    "WARN",
+    `Урокът се основава само на справочни материали (${orgs}) — те не са учебна програма или учебник. Не е сверен автоматично с официалната учебна програма: редакторът проверява обхвата за класа.`,
+  );
+}
+
+function checkReadability(prose: string, grade: number | null): CheckOutcome {
+  const r = readability(prose);
+  const lim = readabilityLimits(grade);
+  const problems: string[] = [];
+  if (r.avgSentenceWords > lim.avgSentenceWords) problems.push(`средно ${r.avgSentenceWords} думи в изречение (препоръка ≤ ${lim.avgSentenceWords})`);
+  if (r.longWordShare > lim.longWordShare) problems.push(`${Math.round(r.longWordShare * 100)}% дълги думи (препоръка ≤ ${Math.round(lim.longWordShare * 100)}%)`);
+  const who = grade ? `${grade}. клас` : "ниво без клас";
+  return problems.length
+    ? out("readability", "WARN", `Може да е трудно за ${who}: ${problems.join("; ")}`, r)
+    : out("readability", "PASS", `Подходяща дължина на изреченията за ${who} (средно ${r.avgSentenceWords} думи)`, r);
+}
+
 export async function runChecks(db: PrismaClient, itemId: string): Promise<CheckOutcome[]> {
   const item = await loadForChecks(db, itemId);
   const l = item.lesson;
@@ -236,6 +267,8 @@ export async function runChecks(db: PrismaClient, itemId: string): Promise<Check
     checkCopying(prose, item.documents),
     checkLicense(item.documents),
     checkSourceLinks(l, item.documents),
+    checkAuthority(item.documents),
+    checkReadability(prose, cv?.gradeId ?? null),
   ];
 }
 

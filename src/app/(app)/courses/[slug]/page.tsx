@@ -67,7 +67,7 @@ export default async function CoursePage({ params }: PageProps<"/courses/[slug]"
         <div className="card p-5 lg:col-span-2">
           <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
             <span className="font-medium">
-              {plural(coveredTopics, "тема", "теми")} с готови уроци от общо {totalTopics}
+              {plural(coveredTopics, "тема", "теми")} с урок от общо {totalTopics}
             </span>
             {user && uniqueLessonIds.length > 0 && (
               <span className="text-muted">

@@ -283,6 +283,33 @@ export function yearContextConflicts(lesson: string, source: string, specific = 
   return out;
 }
 
+/**
+ * Четивност (евристика): средна дължина на изреченията в думи и дял на дългите думи (≥ 13 букви).
+ * Не е утвърдена формула за български — служи само за насочване на редактора.
+ */
+export function readability(text: string) {
+  const plain = text
+    .replace(/\$\$[\s\S]*?\$\$|\$[^$\n]*\$/g, " ") // формули
+    .replace(/[#*_>`|]/g, " ");
+  const sents = sentences(plain).filter((x) => /\p{L}{2,}/u.test(x));
+  const words = plain.match(/\p{L}+/gu) ?? [];
+  const long = words.filter((w) => w.length >= 13).length;
+  return {
+    sentences: sents.length,
+    words: words.length,
+    avgSentenceWords: sents.length ? Math.round((words.length / sents.length) * 10) / 10 : 0,
+    longWordShare: words.length ? Math.round((long / words.length) * 1000) / 1000 : 0,
+  };
+}
+
+/** Граници по възраст (евристика): средна дължина на изречение и дял на дългите думи. */
+export function readabilityLimits(grade: number | null) {
+  if (grade !== null && grade <= 4) return { avgSentenceWords: 12, longWordShare: 0.04 };
+  if (grade !== null && grade <= 7) return { avgSentenceWords: 16, longWordShare: 0.07 };
+  if (grade !== null && grade <= 10) return { avgSentenceWords: 20, longWordShare: 0.09 };
+  return { avgSentenceWords: 24, longWordShare: 0.12 };
+}
+
 /** Транслитерация по Закона за транслитерацията (за адреси на уроци). */
 const TRANSLIT: Record<string, string> = {
   а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ж: "zh", з: "z", и: "i", й: "y", к: "k", л: "l", м: "m", н: "n", о: "o",

@@ -1,5 +1,6 @@
 import type { PrismaClient, Prisma } from "@/generated/prisma/client";
 import type { PipelineJobKind, PipelineLogLevel } from "@/generated/prisma/enums";
+import { redactSecrets } from "@/lib/config/env";
 import { BlockedError, PermanentError, RetryableError } from "./errors";
 
 /**
@@ -18,7 +19,7 @@ export async function logEvent(
   message: string,
   opts: { level?: PipelineLogLevel; data?: Prisma.InputJsonValue } = {},
 ) {
-  await db.pipelineEvent.create({ data: { itemId, stage, message: message.slice(0, 2000), level: opts.level ?? "INFO", data: opts.data } });
+  await db.pipelineEvent.create({ data: { itemId, stage, message: redactSecrets(message).slice(0, 2000), level: opts.level ?? "INFO", data: opts.data } });
 }
 
 export async function enqueue(db: PrismaClient, itemId: string, kind: PipelineJobKind, runAfter = new Date()) {
@@ -68,7 +69,7 @@ export async function recoverStale(db: PrismaClient, olderThanMs = 15 * 60_000) 
 }
 
 function errorMessage(e: unknown) {
-  return e instanceof Error ? e.message : String(e);
+  return redactSecrets(e instanceof Error ? e.message : String(e));
 }
 
 export type RunOutcome = "succeeded" | "retry" | "failed" | "blocked";

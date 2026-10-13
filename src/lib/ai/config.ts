@@ -1,3 +1,5 @@
+import { numberEnv, readSecretEnv } from "@/lib/config/env";
+
 /** Цени в USD за 1M токена (Anthropic first-party API). Използват се само за проследяване на разходите. */
 const PRICING: Record<string, { input: number; output: number; cacheRead: number }> = {
   "claude-opus-5-5": { input: 4, output: 20, cacheRead: 0.2 },
@@ -10,19 +12,41 @@ const PRICING: Record<string, { input: number; output: number; cacheRead: number
 
 export type Effort = "low" | "medium" | "high";
 
+/**
+ * Настройки на AI от средата. Ключът се чете от ANTHROPIC_API_KEY или от файл (ANTHROPIC_API_KEY_FILE — secret manager)
+ * и никога не се връща към интерфейса. Невалидно число (напр. AI_MONTHLY_BUDGET_USD="abc") изключва AI,
+ * вместо тихо да махне лимита.
+ */
 export function aiConfig() {
-  const model = process.env.AI_MODEL || "claude-opus-5-5";
-  const effortRaw = process.env.AI_EFFORT || "medium";
+  const model = process.env.AI_MODEL?.trim() || "claude-opus-5-5";
+  const effortRaw = process.env.AI_EFFORT?.trim() || "medium";
   const effort: Effort = effortRaw === "low" || effortRaw === "high" ? effortRaw : "medium";
+  const maxTokens = numberEnv("AI_MAX_TOKENS", 16000, { min: 1024, max: 128000, integer: true });
+  const daily = numberEnv("AI_DAILY_MESSAGES_PER_USER", 60, { min: 0, max: 100000, integer: true });
+  const budget = numberEnv("AI_MONTHLY_BUDGET_USD", 50, { min: 0, max: 100000 });
+  const errors = [maxTokens.error, daily.error, budget.error].filter((e): e is string => !!e);
+  const hasCredentials = !!(readSecretEnv("ANTHROPIC_API_KEY") || readSecretEnv("ANTHROPIC_AUTH_TOKEN"));
   return {
-    configured: !!(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN),
+    configured: hasCredentials && errors.length === 0,
+    hasCredentials,
+    errors,
     model,
+    knownModel: model in PRICING,
     effort,
-    maxTokens: Number(process.env.AI_MAX_TOKENS || 16000),
-    dailyMessagesPerUser: Number(process.env.AI_DAILY_MESSAGES_PER_USER || 60),
-    monthlyBudgetUsd: Number(process.env.AI_MONTHLY_BUDGET_USD || 50),
+    effortValid: ["low", "medium", "high"].includes(effortRaw),
+    maxTokens: maxTokens.value,
+    dailyMessagesPerUser: daily.value,
+    monthlyBudgetUsd: budget.value,
     historyMessages: 20,
   };
+}
+
+/** Защо AI е изключен — за съобщенията към администратора (без стойности на тайни). */
+export function aiUnavailableReason() {
+  const cfg = aiConfig();
+  if (!cfg.hasCredentials) return "липсва ANTHROPIC_API_KEY (или ANTHROPIC_API_KEY_FILE)";
+  if (cfg.errors.length) return `невалидни настройки: ${cfg.errors.join("; ")}`;
+  return null;
 }
 
 export function isAIConfigured() {

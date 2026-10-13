@@ -24,7 +24,7 @@ const FAQ = [
   },
   {
     q: "Съдържанието по учебната програма ли е?",
-    a: "Структурата на курсовете следва учебните програми на МОН, но е ориентировъчна — подредбата в твоя учебник може да е различна. Всеки урок показва дали е проверен от преподавател и какви са източниците му.",
+    a: "Курсовете са подредени по предмети и класове, но структурата им е ориентировъчна — още не е сверена с официалните учебни програми на МОН. Уроците са допълнителни обяснителни материали, а не учебник. Всеки урок показва дали е проверен от преподавател и какви са източниците му (официални или справочни).",
   },
   {
     q: "Гарантирате ли отлична оценка?",
@@ -54,16 +54,17 @@ const FEATURES = [
 ];
 
 const PATHS = [
-  { href: "/subjects", Icon: GraduationCap, title: "1.–12. клас", text: "Всички предмети, НВО и матури" },
-  { href: "/admission", Icon: Target, title: "Кандидат-студенти", text: "51 висши училища, 6000+ специалности" },
+  { href: "/subjects", Icon: GraduationCap, title: "1.–12. клас", text: "Предмети, НВО и матури — уроците се добавят постепенно" },
+  { href: "/admission", Icon: Target, title: "Кандидат-студенти", text: "Висши училища и специалности от регистъра на НАЦИД" },
   { href: "/vocational", Icon: Wrench, title: "Професионално обучение", text: "Официалният списък на професиите" },
   { href: "/driving", Icon: Car, title: "Шофьорски изпит", text: "Теория по официалните теми на ИААА" },
   { href: "/first-aid", Icon: HeartPulse, title: "Първа помощ и спасители", text: "Реанимация, травми, безопасност във водата" },
 ];
 
 export default async function HomePage() {
-  const [lessons, questions, programs, demo] = await Promise.all([
+  const [lessons, verifiedLessons, questions, programs, demo] = await Promise.all([
     db.lesson.count({ where: { status: lessonStatusFilter() } }),
+    db.lesson.count({ where: { status: { in: ["VERIFIED", "PUBLISHED"] } } }),
     db.question.count({ where: { lesson: { status: lessonStatusFilter() }, origin: { not: "AI_GENERATED" } } }),
     db.program.count(),
     db.lesson.findFirst({ where: { isDemo: true, status: lessonStatusFilter() }, orderBy: { createdAt: "asc" }, select: { slug: true, title: true, summary: true, gradeId: true, subject: { select: { name: true } } } }),
@@ -93,7 +94,7 @@ export default async function HomePage() {
               )}
             </div>
             <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted">
-              <li className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-success" /> {plural(lessons, "готов урок", "готови урока")} и {plural(questions, "въпрос", "въпроса")}</li>
+              <li className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-success" /> {plural(lessons, "урок", "урока")} ({verifiedLessons} проверени от редактор) и {plural(questions, "въпрос", "въпроса")}</li>
               <li className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-success" /> {programs.toLocaleString("bg-BG")} специалности от регистъра на НАЦИД</li>
               <li className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-success" /> Работи на телефон</li>
             </ul>

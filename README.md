@@ -71,7 +71,9 @@ npm run dev               # http://localhost:3000
 | `npm run content:check` | проверява всички уроци и програми (без база) |
 | `npm run content:import [-- --force]` | импортира уроците в базата |
 | `npm run user:admin -- имейл "парола" "Име"` | създава или повишава администратор |
-| `npm run pipeline -- enqueue --topic "Тема"` / `work` / `status` | pipeline за съдържание (виж [`docs/PIPELINE.md`](docs/PIPELINE.md)) |
+| `npm run pipeline -- enqueue --topic "Тема"` / `work` / `status` / `validate` | pipeline за съдържание (виж [`docs/PIPELINE.md`](docs/PIPELINE.md)) |
+| `npm run config:check [-- --verify-key]` | състояние на настройките без стойностите на тайните; проверка на ключа без разход |
+| `npm run coverage:report` | карта на покритието на образованието от базата → [`docs/COVERAGE.md`](docs/COVERAGE.md) |
 
 ## Променливи на средата
 
@@ -81,14 +83,14 @@ npm run dev               # http://localhost:3000
 |---|---|---|
 | `DATABASE_URL` | да | връзка към PostgreSQL |
 | `APP_URL` | в продукция | публичният адрес — използва се в линковете в имейлите |
-| `ANTHROPIC_API_KEY` | за AI | ключ за Claude API; без него AI учителят показва, че не е конфигуриран |
+| `ANTHROPIC_API_KEY` | за AI | ключ за Claude API; без него AI функциите показват, че не са конфигурирани. Може и като файл: `ANTHROPIC_API_KEY_FILE` (secret manager) |
 | `AI_MODEL` | не | по подразбиране `claude-opus-5-5` |
 | `AI_EFFORT` | не | `low` / `medium` / `high` |
 | `AI_DAILY_MESSAGES_PER_USER` | не | дневен лимит на съобщения за потребител (по подразбиране 60) |
-| `AI_MONTHLY_BUDGET_USD` | не | месечен бюджет за целия сайт; при достигането му AI спира |
+| `AI_MONTHLY_BUDGET_USD` | не | месечен бюджет за целия сайт; при достигането му AI спира; невалидна стойност изключва AI |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | в продукция | изпращане на имейли |
 | `SHOW_UNVERIFIED_CONTENT` | не | `true` — учениците виждат и непроверени уроци (с ясен етикет); `false` — само проверени |
-| `CRON_SECRET` | за напомняния и pipeline | таен ключ за `POST /api/cron/reminders` и `POST /api/cron/pipeline` |
+| `CRON_SECRET` | за напомняния и pipeline | таен ключ (≥ 32 знака) за `POST /api/cron/reminders` и `POST /api/cron/pipeline` |
 | `PIPELINE_CONTACT_EMAIL` | за pipeline-а | контакт в User-Agent при извличане от Уикипедия (изискване на Wikimedia) |
 | `ADMIN_EMAIL` | не | при `db:seed` този акаунт (ако съществува) получава роля администратор |
 | `EMAIL_DEV_OUTBOX` | не | `true` — писмата се записват в базата вместо да се изпращат (за тестове) |
@@ -179,6 +181,12 @@ sources: [mon]                       # ключове от content/sources.yaml
 - **Документи (PDF, DOCX, TXT)** — текстът се извлича и се създава **чернова** за редакция. Нищо не се публикува автоматично.
 
 Всяка редакция в админ панела създава версия на урока (история и връщане назад).
+
+## Покритие на образованието
+
+**Админ → Покритие** и [`docs/COVERAGE.md`](docs/COVERAGE.md) (`npm run coverage:report`) показват от базата кое е внесено и
+проверено и кое липсва: класове 1–12, предмети, профили, НВО/ДЗИ, професии, училища, висши училища, специалности, изпити.
+Нищо не се обявява за налично, ако не е внесено; очакваните предмети по Наредба № 4/2015 са отбелязани „чака сверка“.
 
 ## Pipeline за съдържание
 

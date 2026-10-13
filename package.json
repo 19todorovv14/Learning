@@ -19,7 +19,9 @@
     "content:import": "tsx scripts/import-content.ts",
     "user:admin": "tsx scripts/create-admin.ts",
     "postinstall": "prisma generate",
-    "pipeline": "tsx scripts/pipeline.ts"
+    "pipeline": "tsx scripts/pipeline.ts",
+    "config:check": "tsx scripts/config-check.ts",
+    "coverage:report": "tsx scripts/coverage-report.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.133.0",

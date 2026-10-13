@@ -1,5 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
+import { redactSecrets } from "@/lib/config/env";
 import type { Prisma } from "@/generated/prisma/client";
 
 /** Записва административно действие. Не записвайте лични данни в metadata. */
@@ -17,8 +18,8 @@ export async function logError(message: string, opts: { stack?: string; path?: s
   try {
     await db.errorLog.create({
       data: {
-        message: message.slice(0, 2000),
-        stack: opts.stack?.slice(0, 8000),
+        message: redactSecrets(message).slice(0, 2000),
+        stack: opts.stack ? redactSecrets(opts.stack).slice(0, 8000) : undefined,
         // Без query string — там може да има токени (напр. линк за смяна на парола).
         path: opts.path?.split("?")[0].slice(0, 500),
         digest: opts.digest,

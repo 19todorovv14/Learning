@@ -58,7 +58,7 @@ export default async function SubjectPage({ params }: PageProps<"/subjects/[slug
                     <div className="min-w-0 flex-1">
                       <div className="font-medium group-hover:text-primary">{c.title}</div>
                       <div className="mt-1 text-sm text-muted">
-                        {plural(topics, "тема", "теми")} · {plural(c._count.lessons, "готов урок", "готови урока")}
+                        {plural(topics, "тема", "теми")} · {plural(c._count.lessons, "урок", "урока")}
                         {c.variant ? ` · ${c.variant}` : ""}
                       </div>
                     </div>

@@ -29,6 +29,8 @@ describe.skipIf(!hasDb)("Pipeline за съдържание — от източ�
   const { recoverStale, enqueue } = await import("@/lib/pipeline/queue");
   const { changeLessonStatus, LessonStatusError } = await import("@/lib/content/lesson-status");
   const { learnerStatuses } = await import("@/lib/data/visibility");
+  const { HUMAN_CHECKS } = await import("@/lib/pipeline/labels");
+  const ALL_CHECKS = HUMAN_CHECKS.map((c) => c.key);
 
   const topic = await db.curriculumTopic.findFirstOrThrow({ where: { title: "Княз Борис I и покръстването" } });
   const editor = await db.user.create({ data: { email: `pipeline-${Date.now()}@example.bg`, passwordHash: "x", displayName: "Редактор тест", role: "EDITOR" } });
@@ -261,15 +263,36 @@ describe.skipIf(!hasDb)("Pipeline за съдържание — от източ�
     expect(byKind.copying.result).toBe("PASS");
     expect(byKind.license.result).toBe("PASS");
     expect(byKind.sources.result).toBe("PASS");
+    // Уикипедия е справочен материал — не се представя като официален документ
+    expect(byKind.authority.result).toBe("WARN");
+    expect(byKind.authority.message).toContain("само на справочни материали");
+    expect(lesson.sources.every((s) => s.source.type === "REFERENCE")).toBe(true);
+    expect(["PASS", "WARN"]).toContain(byKind.readability.result);
     expect(byKind.contradictions.result).toBe("WARN");
     expect(byKind.contradictions.message).toMatch(/864/);
   });
 
+  it("валидационният отчет съдържа само реалните данни: проверки, цитати, разход и предстоящи човешки проверки", async () => {
+    const { buildValidationReport } = await import("@/lib/pipeline/validation");
+    const report = await buildValidationReport(db, [itemId], { startedAt: new Date(Date.now() - 3600_000), model: "claude-opus-5-5" });
+    expect(report.requests).toBeGreaterThan(0);
+    expect(report.totalCostUsd).toBeGreaterThan(0);
+    expect(report.markdown).toContain("Княз Борис I и покръстването");
+    expect(report.markdown).toContain("| Цитати спрямо източника | PASS |");
+    expect(report.markdown).toContain("Справочен материал — не е официален учебен документ");
+    expect(report.markdown).toContain("| Сверих ключовите факти, дати и числа с източниците | ☐ предстои |");
+    expect(report.markdown).toContain("чернови (DRAFT)");
+  });
+
   it("редакторът одобрява → урокът е публикуван и видим", async () => {
-    await service.approveItem(db, itemId, editor.id, "Сверено с източниците");
+    // без потвърдени човешки проверки одобрението се отказва
+    await expect(service.approveItem(db, itemId, editor.id, null, ["facts"])).rejects.toThrow(/Потвърдете човешките проверки/);
+    expect((await reload(itemId)).stage).toBe("AWAITING_REVIEW");
+    await service.approveItem(db, itemId, editor.id, "Сверено с източниците", ALL_CHECKS);
     const it4 = await reload(itemId);
     expect(it4.stage).toBe("PUBLISHED");
     expect(it4.reviewedById).toBe(editor.id);
+    expect(it4.reviewChecklist).toMatchObject({ confirmed: ALL_CHECKS, by: editor.id });
     const lesson = await db.lesson.findUniqueOrThrow({ where: { id: it4.lessonId! }, include: { questions: true, reviews: true } });
     expect(lesson.status).toBe("PUBLISHED");
     expect(learnerStatuses()).toContain("PUBLISHED");
@@ -305,7 +328,7 @@ describe.skipIf(!hasDb)("Pipeline за съдържание — от източ�
     // дублиране на тема: вече има публикуван урок
     expect(it5.checks.find((c) => c.kind === "duplicates")?.result).toBe("WARN");
 
-    await expect(service.approveItem(db, item.id, editor.id, null)).rejects.toThrow(/Одобряват се само/);
+    await expect(service.approveItem(db, item.id, editor.id, null, ALL_CHECKS)).rejects.toThrow(/Одобряват се само/);
     await expect(changeLessonStatus(db, editor.id, it5.lessonId!, "PUBLISHED", null)).rejects.toBeInstanceOf(LessonStatusError);
 
     currentDraft = await draftFor(item.id, false);

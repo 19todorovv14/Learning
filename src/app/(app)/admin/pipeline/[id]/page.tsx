@@ -18,6 +18,7 @@ import {
   retryPipelineItemAction,
 } from "@/app/actions/pipeline";
 import { StageBadge } from "../stage-badge";
+import { HUMAN_CHECKS } from "@/lib/pipeline/labels";
 
 // „Обработи опашката сега“ изпълнява задачи в server action — до минута.
 export const maxDuration = 60;
@@ -158,12 +159,21 @@ export default async function PipelineItemPage({ params, searchParams }: PagePro
         <section className="card mb-6 p-4">
           <h2 className="section-title mb-2">Редакторска проверка</h2>
           <p className="mb-3 text-sm text-muted">
-            Прочетете урока, сверете ключовите факти с цитатите и източниците по-долу. При одобрение проверките се пускат отново и урокът става
-            видим за учащите.
+            Автоматичните проверки (по-долу) насочват вниманието, но не гарантират точност. Прочетете урока, сверете фактите с цитатите и
+            източниците и потвърдете всяка човешка проверка. При одобрение автоматичните проверки се пускат отново и урокът става видим за учащите.
           </p>
           <div className="grid gap-3 md:grid-cols-2">
             <form action={approvePipelineItemAction} className="space-y-2">
               <input type="hidden" name="id" value={item.id} />
+              <fieldset className="space-y-1 text-sm">
+                <legend className="mb-1 text-xs font-medium text-text-2">Човешка проверка (задължително)</legend>
+                {HUMAN_CHECKS.map((c) => (
+                  <label key={c.key} className="flex items-start gap-2">
+                    <input type="checkbox" name="check" value={c.key} required className="mt-0.5" />
+                    <span>{c.label}</span>
+                  </label>
+                ))}
+              </fieldset>
               <input name="note" className="input py-2 text-sm" placeholder="Бележка (по желание)" aria-label="Бележка при одобрение" />
               <button className="btn-primary py-2 text-sm" disabled={hasFail || item.stage !== "AWAITING_REVIEW"}>
                 Одобри и публикувай
@@ -182,6 +192,7 @@ export default async function PipelineItemPage({ params, searchParams }: PagePro
         <p className="mb-6 rounded-lg bg-success-soft px-4 py-3 text-sm text-success">
           Проверено от редактор{item.reviewer ? ` (${item.reviewer.displayName})` : ""}
           {item.reviewedAt ? ` на ${formatDateTime(item.reviewedAt)}` : ""} и публикувано.{item.reviewNote ? ` Бележка: ${item.reviewNote}` : ""}
+          {item.reviewChecklist ? ` Потвърдени човешки проверки: ${HUMAN_CHECKS.length}.` : " (одобрено от редактора на уроци, без чеклист)"}
         </p>
       )}
       {item.stage === "REJECTED" && item.reviewNote && (

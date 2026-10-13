@@ -136,8 +136,9 @@ export async function approvePipelineItemAction(fd: FormData) {
   const user = await requireRole("EDITOR");
   const id = str(fd, "id");
   const note = str(fd, "note").slice(0, 1000) || null;
+  const confirmed = fd.getAll("check").map(String);
   return guarded(id, async () => {
-    await approveItem(db, id, user.id, note);
+    await approveItem(db, id, user.id, note, confirmed);
     await audit(user.id, "pipeline.approve", "PipelineItem", id);
     return "approved=1";
   });

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BadgeCheck, MapPin } from "lucide-react";
 import { db } from "@/lib/db";
+import { formatDate } from "@/lib/utils";
 import { PageHeader } from "@/components/ui/page-header";
 import { plural } from "@/lib/utils";
 
@@ -24,6 +25,7 @@ export default async function UniversitiesPage({ searchParams }: PageProps<"/uni
       include: { _count: { select: { programs: { where: { degree: { in: ["BACHELOR", "PROFESSIONAL_BACHELOR", "MASTER"] } } }, faculties: true } } },
     }),
   ]);
+  const nacid = await db.source.findUnique({ where: { key: "nacid-rvu" }, select: { verifiedAt: true } });
   const cities = [...new Set(all.map((u) => u.city))].sort((a, b) => a.localeCompare(b, "bg"));
 
   return (
@@ -31,7 +33,9 @@ export default async function UniversitiesPage({ searchParams }: PageProps<"/uni
       <PageHeader
         kicker="Висше образование"
         title="Университети и академии"
-        description="Всички 51 висши училища от регистъра на НАЦИД с факултетите и специалностите им. Данните за специалностите са официални; условията за прием проверявай на сайта на съответното училище."
+        description={`${all.length} висши училища от публичния регистър на НАЦИД${
+          nacid?.verifiedAt ? ` (данни от ${formatDate(nacid.verifiedAt)})` : ""
+        } с факултетите и специалностите им. Специалностите са от регистъра; условията за прием (изпити, балообразуване, срокове) още не са внесени — проверявай ги на сайта на съответното училище.`}
       />
       <form method="get" className="card mb-6 grid gap-3 p-4 sm:grid-cols-[1fr_200px_200px_auto]">
         <input name="q" defaultValue={q} className="input" placeholder="Търси по име…" aria-label="Търсене" />

@@ -3,6 +3,7 @@ import type { PipelineJobKind, PipelineStage } from "@/generated/prisma/enums";
 import { changeLessonStatus } from "@/lib/content/lesson-status";
 import { lessonTemplate } from "@/lib/content/serialize";
 import { runChecksAndUpdateStage } from "./checks";
+import { HUMAN_CHECKS } from "./labels";
 import { DEFAULT_PROVIDER, getProvider } from "./providers";
 import { enqueue, logEvent } from "./queue";
 import { lessonSlugFor, loadItemForLesson, saveLessonForItem } from "./stages";
@@ -116,17 +117,23 @@ export async function recheckItem(db: PrismaClient, itemId: string) {
   return runChecksAndUpdateStage(db, itemId);
 }
 
-export async function approveItem(db: PrismaClient, itemId: string, editorId: string, note: string | null) {
+export async function approveItem(db: PrismaClient, itemId: string, editorId: string, note: string | null, confirmed: string[]) {
   const item = await db.pipelineItem.findUniqueOrThrow({ where: { id: itemId } });
   if (!item.lessonId) throw new PipelineActionError("Няма урок за одобрение");
   if (item.stage !== "AWAITING_REVIEW") throw new PipelineActionError("Одобряват се само уроци, които са минали автоматичните проверки");
+  const missing = HUMAN_CHECKS.filter((c) => !confirmed.includes(c.key));
+  if (missing.length) throw new PipelineActionError(`Потвърдете човешките проверки: ${missing.map((c) => c.label).join("; ")}`);
   // Проверките се пускат отново — урокът може да е редактиран след последната проверка.
   const results = await runChecksAndUpdateStage(db, itemId);
   const failed = results.filter((r) => r.result === "FAIL");
   if (failed.length) throw new PipelineActionError(`Проверките вече не минават: ${failed.map((f) => f.label).join(", ")}`);
   await changeLessonStatus(db, editorId, item.lessonId, "PUBLISHED", note || "Одобрено от редактор (pipeline)");
-  await db.pipelineItem.update({ where: { id: itemId }, data: { stage: "PUBLISHED", reviewedById: editorId, reviewedAt: new Date(), reviewNote: note } });
-  await logEvent(db, itemId, "REVIEW", `Проверено от редактор и публикувано${note ? `: ${note}` : ""}`);
+  const checklist = { confirmed: HUMAN_CHECKS.map((c) => c.key), by: editorId, at: new Date().toISOString() };
+  await db.pipelineItem.update({
+    where: { id: itemId },
+    data: { stage: "PUBLISHED", reviewedById: editorId, reviewedAt: new Date(), reviewNote: note, reviewChecklist: checklist },
+  });
+  await logEvent(db, itemId, "REVIEW", `Проверено от редактор (${HUMAN_CHECKS.length} човешки проверки потвърдени) и публикувано${note ? `: ${note}` : ""}`);
 }
 
 export async function rejectItem(db: PrismaClient, itemId: string, editorId: string, note: string) {

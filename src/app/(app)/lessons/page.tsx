@@ -27,7 +27,7 @@ export default async function LessonsLibrary({ searchParams }: PageProps<"/lesso
 
   return (
     <>
-      <PageHeader kicker="Библиотека" title="Уроци" description={`${data.total} готови урока. Филтрирай по предмет и клас.`} />
+      <PageHeader kicker="Библиотека" title="Уроци" description={`${data.total} урока — непроверените от редактор са отбелязани. Филтрирай по предмет и клас.`} />
       <form className="card mb-6 grid gap-3 p-4 sm:grid-cols-[1fr_180px_auto]" method="get">
         <select name="subject" defaultValue={subject ?? ""} className="input" aria-label="Предмет">
           <option value="">Всички предмети</option>

@@ -1,3 +1,4 @@
+import { pipelineContactEmail } from "@/lib/config/env";
 import { PermanentError, RetryableError } from "./errors";
 
 /**
@@ -10,7 +11,7 @@ const lastRequestAt = new Map<string, number>();
 const hostLocks = new Map<string, Promise<unknown>>();
 
 export function pipelineUserAgent() {
-  const contact = [process.env.APP_URL || "https://github.com/19todorovv14/learning", process.env.PIPELINE_CONTACT_EMAIL]
+  const contact = [process.env.APP_URL || "https://github.com/19todorovv14/learning", pipelineContactEmail().value]
     .filter(Boolean)
     .join("; ");
   return `BG-LEARN-ContentPipeline/0.1 (${contact})`;
@@ -23,6 +24,10 @@ function minIntervalMs() {
 /** Максимално изчакване на място при Retry-After; при по-дълго задачата се връща в опашката. */
 function maxInlineWaitMs() {
   return Number(process.env.PIPELINE_MAX_INLINE_WAIT_MS ?? 15_000);
+}
+
+function slowPauseMs() {
+  return Number(process.env.PIPELINE_SLOW_REQUEST_PAUSE_MS ?? 5000);
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -41,12 +46,15 @@ async function withHostLock<T>(host: string, fn: () => Promise<T>): Promise<T> {
   const mine = new Promise<void>((r) => (release = r));
   hostLocks.set(host, prev.then(() => mine));
   await prev.catch(() => {});
+  const started = Date.now();
   try {
     const wait = (lastRequestAt.get(host) ?? 0) + minIntervalMs() - Date.now();
     if (wait > 0) await sleep(wait);
     return await fn();
   } finally {
-    lastRequestAt.set(host, Date.now());
+    // Wikimedia Robot policy: ако заявката е отнела над 1 s, изчакай 5 s преди следващата.
+    const slow = Date.now() - started > 1000;
+    lastRequestAt.set(host, Date.now() + (slow ? slowPauseMs() - minIntervalMs() : 0));
     release();
   }
 }

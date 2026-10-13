@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 import type { PrismaClient } from "@/generated/prisma/client";
-import { aiConfig } from "./config";
+import { aiConfig, aiUnavailableReason } from "./config";
 import { FALLBACK_BETA, getAnthropicClient, monthSpentMicroUsd, recordAIUsage } from "./client";
 
 /**
@@ -108,7 +108,7 @@ export async function generateLessonDraft(db: PrismaClient, input: GenerationInp
   if (!cfg.configured)
     throw new AINotConfiguredError(
       "NOT_CONFIGURED",
-      "Генерирането на урок изисква ANTHROPIC_API_KEY в настройките на сървъра (.env). Източникът е извлечен и чака.",
+      `Генерирането на урок изисква работещ Claude API: ${aiUnavailableReason()}. Източникът е извлечен и чака.`,
     );
   if ((await monthSpentMicroUsd(db)) >= cfg.monthlyBudgetUsd * 1_000_000)
     throw new AINotConfiguredError("BUDGET", `Изчерпан е месечният AI бюджет (AI_MONTHLY_BUDGET_USD=${cfg.monthlyBudgetUsd}).`);

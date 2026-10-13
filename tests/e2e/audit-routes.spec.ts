@@ -57,7 +57,7 @@ async function checkLinks(ctx: BrowserContext, links: Set<string>, problems: Pro
 
 const PUBLIC = ["/", "/about-content", "/privacy", "/terms", "/login", "/register", "/forgot-password", "/reset-password", "/verify-email", "/subjects", "/lessons", "/admission", "/universities", "/vocational", "/driving", "/first-aid", "/search?q=питагорова"];
 const USER = ["/dashboard", "/my-learning", "/progress", "/quizzes", "/review", "/notes", "/plan", "/notifications", "/settings", "/tutor", "/tutor/history", "/onboarding"];
-const ADMIN_PAGES = ["/admin", "/admin/ai", "/admin/audit", "/admin/errors", "/admin/import", "/admin/lessons", "/admin/lessons/new", "/admin/pipeline", "/admin/review", "/admin/schools", "/admin/sources", "/admin/users"];
+const ADMIN_PAGES = ["/admin", "/admin/ai", "/admin/audit", "/admin/coverage", "/admin/errors", "/admin/import", "/admin/lessons", "/admin/lessons/new", "/admin/pipeline", "/admin/review", "/admin/schools", "/admin/sources", "/admin/users"];
 
 test("анонимен потребител: публичните страници работят, защитените пренасочват към вход", async ({ page, context }) => {
   const d = await dynamicRoutes();

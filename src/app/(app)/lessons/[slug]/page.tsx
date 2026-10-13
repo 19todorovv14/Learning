@@ -22,6 +22,7 @@ import { Markdown } from "@/components/markdown/markdown";
 import { Breadcrumbs } from "@/components/ui/page-header";
 import { Alert } from "@/components/ui/misc";
 import { StatusBadge, ORIGIN_LABEL } from "@/components/ui/status-badge";
+import { AUTHORITY_LABEL, sourceAuthority } from "@/lib/content/source-authority";
 import { SubjectIcon } from "@/components/learning/subject-icon";
 import { LessonActions } from "@/components/learning/lesson-actions";
 import { LessonTracker } from "@/components/learning/lesson-tracker";
@@ -376,32 +377,41 @@ export default async function LessonPage({ params, searchParams }: PageProps<"/l
               {ORIGIN_LABEL[lesson.origin]} · версия {lesson.version} · обновен на {formatDate(lesson.updatedAt)}
               {lesson.authorName ? ` · автор: ${lesson.authorName}` : ""}
             </p>
+            <p className="mt-1">
+              Вид: допълнителен обяснителен материал на BG LEARN — не е учебник и не е официалната учебна програма на МОН.
+            </p>
             {lesson.sources.length > 0 ? (
               <ul className="mt-2 space-y-1">
-                {lesson.sources.map(({ source }) => (
-                  <li key={source.id}>
-                    <a href={source.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">
-                      {source.organization} — {source.title} <ExternalLink className="h-3 w-3" />
-                    </a>
-                    <span className="ml-1 text-xs">
-                      {source.freshness === "CURRENT" && source.verifiedAt
-                        ? `(проверен на ${formatDate(source.verifiedAt)})`
-                        : "(линкът не е проверен)"}
-                    </span>
-                    {source.license && (
+                {lesson.sources.map(({ source }) => {
+                  const authority = sourceAuthority(source.type);
+                  return (
+                    <li key={source.id}>
+                      <a href={source.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">
+                        {source.organization} — {source.title} <ExternalLink className="h-3 w-3" />
+                      </a>
                       <span className="ml-1 text-xs">
-                        · лиценз{" "}
-                        {source.licenseUrl ? (
-                          <a href={source.licenseUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                            {source.license}
-                          </a>
-                        ) : (
-                          source.license
-                        )}
+                        · {AUTHORITY_LABEL[authority]}
+                        {authority === "official" && source.freshness !== "CURRENT"
+                          ? " · не е проверен — урокът не е сверен с този документ"
+                          : source.freshness === "CURRENT" && source.verifiedAt
+                            ? ` · проверен на ${formatDate(source.verifiedAt)}`
+                            : " · линкът не е проверен"}
                       </span>
-                    )}
-                  </li>
-                ))}
+                      {source.license && (
+                        <span className="ml-1 text-xs">
+                          · лиценз{" "}
+                          {source.licenseUrl ? (
+                            <a href={source.licenseUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                              {source.license}
+                            </a>
+                          ) : (
+                            source.license
+                          )}
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             ) : (
               <p className="mt-2">Няма посочен външен източник — проверявай важните факти в учебника.</p>

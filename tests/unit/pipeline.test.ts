@@ -134,6 +134,17 @@ describe("pipeline — източници и опашка", () => {
     expect(scored.find((c) => c.title === "Княз")?.reason).toBe("твърде кратка статия");
   });
 
+  it("статия, която съвпада с темата само по обща дума, не се избира („Закон на Ом“ за „Периодичен закон“)", () => {
+    const c = (title: string, rank: number) => ({ externalId: String(rank), title, url: "", rank, size: 30000, disambiguation: false, revisionId: null });
+    const scored = scoreCandidates("Периодичен закон и периодична система", [c("Периодична система", 1), c("Закон на Ом", 2), c("Слънчева система", 3)], 2);
+    expect(scored.filter((x) => x.selected).map((x) => x.title)).toEqual(["Периодична система"]);
+    expect(scored.find((x) => x.title === "Закон на Ом")?.reason).toBe("съвпада с темата само по обща дума");
+    expect(scored.find((x) => x.title === "Слънчева система")?.reason).toBe("съвпада с темата само по обща дума");
+    const homonym = scoreCandidates("Периодичен закон и периодична система", [c("Периодична система", 1), c("Периодичната система (Примо Леви)", 2)], 2);
+    expect(homonym.filter((x) => x.selected).map((x) => x.title)).toEqual(["Периодична система"]);
+    expect(homonym.find((x) => x.title.includes("Примо Леви"))?.reason).toBe("друго значение на „Периодична система“ (Примо Леви)");
+  });
+
   it("лицензът се разпознава от текста, който връща API-то", () => {
     expect(normalizeLicense("Creative Commons Attribution-Share Alike 4.0")).toEqual({ name: "CC BY-SA 4.0", url: "https://creativecommons.org/licenses/by-sa/4.0/" });
     expect(normalizeLicense(undefined)).toBeNull();

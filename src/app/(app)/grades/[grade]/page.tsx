@@ -66,7 +66,7 @@ export default async function GradePage({ params }: PageProps<"/grades/[grade]">
                   <div className="font-medium group-hover:text-primary">{c.subject.name}</div>
                   <div className="text-sm text-muted">{c.gradeTo || (c.variant && c.variant !== "ООП") ? c.title : `${grade}. клас`}</div>
                   <div className="mt-2 text-xs text-muted">
-                    {plural(topics, "тема", "теми")} · {plural(c._count.lessons, "готов урок", "готови урока")}
+                    {plural(topics, "тема", "теми")} · {plural(c._count.lessons, "урок", "урока")}
                   </div>
                 </div>
               </Link>

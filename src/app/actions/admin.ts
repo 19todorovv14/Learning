@@ -6,6 +6,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/guards";
 import { audit } from "@/lib/audit";
+import { robotsAllows } from "@/lib/robots";
 import { ContentError, parseLessonFile } from "@/lib/content/parse-lesson";
 import { saveParsedLesson, SaveLessonError } from "@/lib/content/save-lesson";
 import { changeLessonStatus, LessonStatusError } from "@/lib/content/lesson-status";
@@ -111,8 +112,18 @@ export async function updateSourceAction(fd: FormData) {
 export async function checkSourcesAction() {
   const user = await requireRole("EDITOR");
   const sources = await db.source.findMany({ select: { id: true, url: true } });
+  let skipped = 0;
   await Promise.all(
     sources.map(async (s) => {
+      // Не проверяваме адреси, за които robots.txt забранява автоматичен достъп (напр. правно-информационни системи).
+      if (!(await robotsAllows(s.url))) {
+        skipped++;
+        await db.source.update({
+          where: { id: s.id },
+          data: { verificationNote: "Автоматичната проверка е пропусната: robots.txt на сайта забранява автоматичен достъп. Проверете ръчно." },
+        });
+        return;
+      }
       let status = 0;
       try {
         const res = await fetch(s.url, { method: "GET", redirect: "follow", signal: AbortSignal.timeout(15000), headers: { "User-Agent": "BG-LEARN-LinkCheck/1.0" } });
@@ -126,7 +137,7 @@ export async function checkSourcesAction() {
       });
     }),
   );
-  await audit(user.id, "source.check", "Source", null, { count: sources.length });
+  await audit(user.id, "source.check", "Source", null, { count: sources.length, skippedByRobots: skipped });
   revalidatePath("/admin/sources");
 }
 

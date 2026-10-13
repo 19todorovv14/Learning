@@ -6,6 +6,7 @@ const NAV = [
   { href: "/admin/lessons", label: "Уроци", min: "TEACHER" },
   { href: "/admin/review", label: "Проверка и сигнали", min: "EDITOR" },
   { href: "/admin/pipeline", label: "Pipeline", min: "EDITOR" },
+  { href: "/admin/coverage", label: "Покритие", min: "EDITOR" },
   { href: "/admin/import", label: "Импорт", min: "EDITOR" },
   { href: "/admin/sources", label: "Източници", min: "EDITOR" },
   { href: "/admin/schools", label: "Училища", min: "EDITOR" },

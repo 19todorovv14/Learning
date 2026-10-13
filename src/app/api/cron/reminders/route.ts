@@ -1,26 +1,18 @@
 import { NextResponse } from "next/server";
-import { timingSafeEqual } from "node:crypto";
+import { cronAuthorized } from "@/lib/config/cron-auth";
 import { db } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
 import { appUrl } from "@/lib/app-url";
 import { cleanupRateLimits } from "@/lib/rate-limit";
 import { sofiaDay } from "@/lib/data/progress";
 
-function authorized(req: Request) {
-  const secret = process.env.CRON_SECRET;
-  const header = req.headers.get("authorization") ?? "";
-  if (!secret) return false;
-  const a = Buffer.from(header);
-  const b = Buffer.from(`Bearer ${secret}`);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
 
 /**
  * Ежедневни напомняния по имейл (само за потребители, които са ги включили).
  * Извиква се от планировчик: curl -H "Authorization: Bearer $CRON_SECRET" -X POST $APP_URL/api/cron/reminders
  */
 export async function POST(req: Request) {
-  if (!authorized(req)) return NextResponse.json({ error: "Неоторизиран достъп." }, { status: 401 });
+  if (!cronAuthorized(req)) return NextResponse.json({ error: "Неоторизиран достъп." }, { status: 401 });
   const today = sofiaDay(new Date());
   const users = await db.user.findMany({
     where: { emailVerifiedAt: { not: null }, preferences: { emailReminders: true } },

@@ -23,16 +23,30 @@ export type ScoredCandidate = Candidate & { score: number; selected: boolean; re
  * Подбор на източници от резултатите при търсене: изключват се пояснителни страници, много кратки статии
  * и заглавия без връзка с темата; останалите се подреждат по съвпадение със заглавието, позиция и обем.
  */
+/** Общи учебни думи (основи), по които съвпадение само по себе си не прави статията уместна („Закон на Ом“ ≠ „Периодичен закон“). */
+const GENERIC_STEMS = new Set(["зако", "сист", "теор", "проц", "свой", "вида", "видо", "общи", "осно", "стро", "явле", "прин", "мето", "особ", "разв", "разн", "клас", "поня", "елем", "прав", "моде", "вещи", "част", "закл"]);
+
 export function scoreCandidates(query: string, candidates: Candidate[], take = SOURCES_PER_ITEM()): ScoredCandidate[] {
+  const q = stems(query);
   const scored = candidates.map((c): ScoredCandidate => {
     const overlap = stemOverlap(c.title, query);
+    const specific = [...stems(c.title)].filter((x) => q.has(x) && !GENERIC_STEMS.has(x));
     let reason: string | null = null;
     if (c.disambiguation) reason = "пояснителна страница";
     else if (c.size < MIN_ARTICLE_BYTES()) reason = "твърде кратка статия";
     else if (overlap === 0) reason = "заглавието не съвпада с темата";
+    else if (!specific.length) reason = "съвпада с темата само по обща дума";
     const score = overlap * 10 + (8 - Math.min(c.rank, 8)) + Math.min(c.size / 20_000, 1.5) - (/\(.+\)/.test(c.title) ? 3 : 0);
     return { ...c, score: Math.round(score * 100) / 100, selected: false, reason };
   });
+  // „Периодичната система (Примо Леви)“, „Борис I (филм)“ — уточнението в скоби е друго значение на основната статия
+  for (const c of scored) {
+    const m = c.title.match(/^(.+?)\s*\((.+)\)\s*$/);
+    if (c.reason || !m) continue;
+    const base = stems(m[1]);
+    const primary = scored.find((o) => o !== c && !/\(.+\)/.test(o.title) && [...base].every((x) => stems(o.title).has(x)));
+    if (primary) c.reason = `друго значение на „${primary.title}“ (${m[2]})`;
+  }
   scored.sort((a, b) => b.score - a.score);
   let picked = 0;
   for (const c of scored)

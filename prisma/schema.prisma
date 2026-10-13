@@ -1283,25 +1283,26 @@ enum PipelineCheckResult {
 }
 
 model PipelineItem {
-  id           String        @id @default(cuid())
-  provider     String // доставчик на източници, напр. "wikipedia-bg"
-  query        String // какво се търси (по подразбиране — заглавието на темата)
-  language     String        @default("bg")
-  topicId      String? // целева тема от учебната програма (класификация)
-  stage        PipelineStage @default(QUEUED)
-  lastError    String?
-  blockedCode  String? // напр. NOT_CONFIGURED, BUDGET
-  lessonId     String?
-  candidates   Json? // намерените при търсенето кандидати с оценка и кои са избрани
-  generation   Json? // структурираният резултат от генерирането (с цитати към откъсите)
-  costMicroUsd Int           @default(0) // разход за AI по този елемент
-  generatedBy  String? // "ai:<модел>" или "manual"
-  createdById  String?
-  reviewedById String?
-  reviewedAt   DateTime?
-  reviewNote   String?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id              String        @id @default(cuid())
+  provider        String // доставчик на източници, напр. "wikipedia-bg"
+  query           String // какво се търси (по подразбиране — заглавието на темата)
+  language        String        @default("bg")
+  topicId         String? // целева тема от учебната програма (класификация)
+  stage           PipelineStage @default(QUEUED)
+  lastError       String?
+  blockedCode     String? // напр. NOT_CONFIGURED, BUDGET
+  lessonId        String?
+  candidates      Json? // намерените при търсенето кандидати с оценка и кои са избрани
+  generation      Json? // структурираният резултат от генерирането (с цитати към откъсите)
+  costMicroUsd    Int           @default(0) // разход за AI по този елемент
+  generatedBy     String? // "ai:<модел>" или "manual"
+  createdById     String?
+  reviewedById    String?
+  reviewedAt      DateTime?
+  reviewNote      String?
+  reviewChecklist Json? // кои човешки проверки е потвърдил редакторът при одобрение
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   topic     CurriculumTopic?       @relation(fields: [topicId], references: [id], onDelete: SetNull)
   lesson    Lesson?                @relation(fields: [lessonId], references: [id], onDelete: SetNull)

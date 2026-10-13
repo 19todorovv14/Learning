@@ -55,7 +55,7 @@ test("редактор: тема → източник → извличане →
 
   await page.getByRole("button", { name: "Обработи опашката сега" }).click();
   await expect(page.getByText("Чака настройка", { exact: true }).first()).toBeVisible({ timeout: 45_000 });
-  await expect(page.getByText(/Генерирането на урок изисква ANTHROPIC_API_KEY/).first()).toBeVisible();
+  await expect(page.getByText(/Генерирането на урок изисква работещ Claude API: липсва ANTHROPIC_API_KEY/).first()).toBeVisible();
   // източниците: реалните статии, версия, лиценз, авторство
   await expect(page.getByRole("link", { name: "Борис I", exact: true })).toHaveAttribute("href", "https://bg.wikipedia.org/w/index.php?oldid=12918817");
   await expect(page.getByRole("link", { name: "Покръстване на България" }).first()).toBeVisible();
