@@ -388,11 +388,30 @@ export default async function LessonPage({ params, searchParams }: PageProps<"/l
                         ? `(проверен на ${formatDate(source.verifiedAt)})`
                         : "(линкът не е проверен)"}
                     </span>
+                    {source.license && (
+                      <span className="ml-1 text-xs">
+                        · лиценз{" "}
+                        {source.licenseUrl ? (
+                          <a href={source.licenseUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                            {source.license}
+                          </a>
+                        ) : (
+                          source.license
+                        )}
+                      </span>
+                    )}
                   </li>
                 ))}
               </ul>
             ) : (
               <p className="mt-2">Няма посочен външен източник — проверявай важните факти в учебника.</p>
+            )}
+            {lesson.sources.some(({ source }) => source.license?.includes("SA")) && (
+              <p className="mt-2">
+                Урокът е създаден по материали под лиценз{" "}
+                {[...new Set(lesson.sources.map(({ source }) => source.license).filter((x): x is string => !!x?.includes("SA")))].join(", ")} (с
+                посочено авторство по-горе) и се разпространява под същия лиценз.
+              </p>
             )}
             <p className="mt-2">
               Обясненията са оригинални и не копират учебници. Използвай ги заедно с учебника, по който учиш.

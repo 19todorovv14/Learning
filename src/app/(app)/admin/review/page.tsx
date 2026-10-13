@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Проверка · Админ" };
 
 export default async function ReviewQueuePage() {
   await requireRolePage("EDITOR", "/admin/review");
-  const [queue, reports, aiQuestions] = await Promise.all([
+  const [queue, reports, aiQuestions, pipelineWaiting] = await Promise.all([
     db.lesson.findMany({
       where: { status: { in: ["PENDING_REVIEW", "AI_GENERATED"] } },
       orderBy: { updatedAt: "asc" },
@@ -19,10 +19,20 @@ export default async function ReviewQueuePage() {
     }),
     db.contentReport.findMany({ where: { resolvedAt: null }, orderBy: { createdAt: "asc" }, include: { lesson: { select: { id: true, title: true, slug: true } } } }),
     db.question.count({ where: { origin: "AI_GENERATED" } }),
+    db.pipelineItem.count({ where: { stage: "AWAITING_REVIEW" } }),
   ]);
   return (
     <>
       <h1 className="mb-6 text-2xl font-semibold tracking-tight">Проверка и сигнали</h1>
+      {pipelineWaiting > 0 && (
+        <p className="mb-6 rounded-lg bg-warning-soft px-4 py-3 text-sm text-warning">
+          {pipelineWaiting} урока от pipeline-а са минали автоматичните проверки и чакат редактор —{" "}
+          <Link href="/admin/pipeline?stage=AWAITING_REVIEW" className="font-medium underline">
+            към проверката
+          </Link>
+          .
+        </p>
+      )}
       <section className="mb-10">
         <h2 className="section-title mb-3">Сигнали от потребители ({reports.length})</h2>
         <div className="card divide-y divide-border">

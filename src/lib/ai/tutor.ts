@@ -5,19 +5,11 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { rateLimit } from "@/lib/rate-limit";
 import { logError } from "@/lib/audit";
-import { aiConfig, estimateCostMicroUsd } from "./config";
+import { aiConfig } from "./config";
+import { FALLBACK_BETA, getAnthropicClient, monthSpentMicroUsd, recordAIUsage } from "./client";
 import { learnerContextBlock, lessonContextBlock, TUTOR_SYSTEM_PROMPT, type LearnerContext } from "./prompts";
-import type { AIUsageStatus } from "@/generated/prisma/enums";
 
-let client: Anthropic | null = null;
-function getClient() {
-  // Ключът се чете само на сървъра от ANTHROPIC_API_KEY и никога не се изпраща към браузъра.
-  client ??= new Anthropic({ maxRetries: 2, timeout: 120_000 });
-  return client;
-}
-
-/** Сървърният fallback пренасочва отказани от класификаторите заявки към препоръчан модел. */
-const FALLBACK_BETA = "server-side-fallback-2026-07-01";
+const getClient = getAnthropicClient;
 
 export class AIUnavailableError extends Error {
   constructor(
@@ -49,44 +41,13 @@ export async function assertAIAvailable(userId: string) {
       `Достигна дневния лимит от ${cfg.dailyMessagesPerUser} заявки към AI учителя. Лимитът се подновява след 24 часа.`,
     );
   }
-  const monthStart = new Date();
-  monthStart.setUTCDate(1);
-  monthStart.setUTCHours(0, 0, 0, 0);
-  const spent = await db.aIUsageRecord.aggregate({ _sum: { costMicroUsd: true }, where: { createdAt: { gte: monthStart } } });
-  if ((spent._sum.costMicroUsd ?? 0) >= cfg.monthlyBudgetUsd * 1_000_000) {
+  if ((await monthSpentMicroUsd(db)) >= cfg.monthlyBudgetUsd * 1_000_000) {
     throw new AIUnavailableError("BUDGET", "AI учителят е временно недостъпен (изчерпан месечен бюджет). Опитай отново по-късно.");
   }
 }
 
-async function recordUsage(r: {
-  userId?: string | null;
-  conversationId?: string | null;
-  purpose: string;
-  model: string;
-  status: AIUsageStatus;
-  usage?: Anthropic.Beta.BetaUsage | Anthropic.Usage | null;
-  errorCode?: string;
-}) {
-  const u = r.usage;
-  const input = u?.input_tokens ?? 0;
-  const output = u?.output_tokens ?? 0;
-  const cacheRead = u?.cache_read_input_tokens ?? 0;
-  const cacheWrite = u?.cache_creation_input_tokens ?? 0;
-  await db.aIUsageRecord.create({
-    data: {
-      userId: r.userId ?? null,
-      conversationId: r.conversationId ?? null,
-      purpose: r.purpose,
-      model: r.model,
-      inputTokens: input,
-      outputTokens: output,
-      cacheReadTokens: cacheRead,
-      cacheWriteTokens: cacheWrite,
-      costMicroUsd: estimateCostMicroUsd(r.model, { input, output, cacheRead, cacheWrite }),
-      status: r.status,
-      errorCode: r.errorCode,
-    },
-  });
+async function recordUsage(r: Parameters<typeof recordAIUsage>[1]) {
+  await recordAIUsage(db, r);
 }
 
 export async function getLearnerContext(userId: string): Promise<LearnerContext> {

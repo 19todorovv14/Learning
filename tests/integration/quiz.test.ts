@@ -13,7 +13,15 @@ describe.skipIf(!hasDb)("тестове и прогрес (интеграцио�
   });
 
   it("решаване на тест към урок, точкуване и обновяване на прогреса", async () => {
-    const lesson = await db.lesson.findFirstOrThrow({ where: { questions: { some: { type: "SINGLE_CHOICE" } } } });
+    // Детерминиран избор: урок от хранилището с въпроси и с избор, и със свободен отговор
+    const lesson = await db.lesson.findFirstOrThrow({
+      where: {
+        sourceFile: { not: null },
+        status: "PENDING_REVIEW",
+        AND: [{ questions: { some: { type: "SINGLE_CHOICE" } } }, { questions: { some: { type: { in: ["SHORT_TEXT", "NUMERIC", "FILL_BLANK", "OPEN"] } } } }],
+      },
+      orderBy: { slug: "asc" },
+    });
     const attempt = await startAttempt({ userId: user.id, scope: "LESSON", mode: "PRACTICE", lessonId: lesson.id });
     expect(attempt.questionIds.length).toBeGreaterThanOrEqual(3);
 

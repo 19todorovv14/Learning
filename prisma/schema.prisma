@@ -268,6 +268,8 @@ model User {
   reviews          ContentReview[]
   revisions        LessonRevision[]
   importJobs       ImportJob[]
+  pipelineItems    PipelineItem[]      @relation("PipelineCreator")
+  pipelineReviews  PipelineItem[]      @relation("PipelineReviewer")
   submittedSchools School[]            @relation("SchoolSubmitter")
   contentReports   ContentReport[]
 }
@@ -610,8 +612,9 @@ model CurriculumTopic {
   description String?
   order       Int
 
-  section CurriculumSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  lessons TopicLesson[]
+  section       CurriculumSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  lessons       TopicLesson[]
+  pipelineItems PipelineItem[]
 
   @@index([sectionId, order])
 }
@@ -639,9 +642,12 @@ model Source {
   lastHttpStatus   Int?
   verificationNote String?
   relatedTo        String?
+  license          String? // напр. „CC BY-SA 4.0“ — лицензът, под който материалът може да се използва
+  licenseUrl       String?
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
+  documents    SourceDocument[]
   lessons      LessonSource[]
   curricula    CurriculumVersion[]
   universities University[]
@@ -664,6 +670,7 @@ model Lesson {
   prerequisites       String[]
   keywords            String[]
   estimatedMinutes    Int           @default(20)
+  language            String        @default("bg") // език на урока (ISO 639-1)
   status              ContentStatus @default(DRAFT)
   origin              ContentOrigin @default(AI_ASSISTED)
   isDemo              Boolean       @default(false)
@@ -700,6 +707,7 @@ model Lesson {
   aiConversations   AIConversation[]
   planItems         StudyPlanItem[]
   studySessions     StudySession[]
+  pipelineItems     PipelineItem[]
 
   @@index([curriculumVersionId, order])
   @@index([subjectId, gradeId])
@@ -1227,4 +1235,194 @@ model DevEmail {
   subject   String
   text      String
   createdAt DateTime @default(now())
+}
+
+// ───────────── Pipeline за откриване и обработка на учебно съдържание ─────────────
+// Път: тема от програмата → откриване на източник (API) → извличане на текст → урок (чернова)
+// → автоматични проверки → редакторска проверка → публикуване. Всяка стъпка е задача в опашката.
+
+enum PipelineStage {
+  QUEUED // чака откриване на източник
+  DISCOVERED // открит източник
+  EXTRACTED // извлечено съдържание
+  GENERATED // създаден урок (чернова), предстоят проверки
+  CHECKS_FAILED // автоматичните проверки откриха проблеми
+  AWAITING_REVIEW // автоматично проверено — чака редактор
+  PUBLISHED // проверено от редактор и публикувано
+  REJECTED // отхвърлено от редактор
+  UNCLASSIFIED // некласифициран материал (няма подходяща тема)
+  BLOCKED // чака настройка (напр. ANTHROPIC_API_KEY)
+  FAILED // неуспешна обработка
+}
+
+enum PipelineJobKind {
+  DISCOVER
+  EXTRACT
+  GENERATE
+  CHECK
+}
+
+enum PipelineJobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
+enum PipelineLogLevel {
+  INFO
+  WARN
+  ERROR
+}
+
+enum PipelineCheckResult {
+  PASS
+  WARN
+  FAIL
+}
+
+model PipelineItem {
+  id           String        @id @default(cuid())
+  provider     String // доставчик на източници, напр. "wikipedia-bg"
+  query        String // какво се търси (по подразбиране — заглавието на темата)
+  language     String        @default("bg")
+  topicId      String? // целева тема от учебната програма (класификация)
+  stage        PipelineStage @default(QUEUED)
+  lastError    String?
+  blockedCode  String? // напр. NOT_CONFIGURED, BUDGET
+  lessonId     String?
+  candidates   Json? // намерените при търсенето кандидати с оценка и кои са избрани
+  generation   Json? // структурираният резултат от генерирането (с цитати към откъсите)
+  costMicroUsd Int           @default(0) // разход за AI по този елемент
+  generatedBy  String? // "ai:<модел>" или "manual"
+  createdById  String?
+  reviewedById String?
+  reviewedAt   DateTime?
+  reviewNote   String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  topic     CurriculumTopic?       @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  lesson    Lesson?                @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  createdBy User?                  @relation("PipelineCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  reviewer  User?                  @relation("PipelineReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  documents PipelineItemDocument[]
+  jobs      PipelineJob[]
+  events    PipelineEvent[]
+  checks    PipelineCheck[]
+
+  @@index([stage, updatedAt])
+  @@index([topicId])
+}
+
+/**
+ * Снимка на документ от източник в конкретен момент: какво, откъде, кога, под какъв лиценз.
+ */
+model SourceDocument {
+  id               String    @id @default(cuid())
+  sourceId         String
+  provider         String
+  externalId       String // напр. pageid в Уикипедия
+  revisionId       String? // версия на документа при източника
+  revisedAt        DateTime? // дата на тази версия при източника
+  title            String
+  url              String
+  language         String // език според източника
+  detectedLanguage String? // език според текста (проверка)
+  license          String
+  licenseUrl       String?
+  attribution      String
+  accessBasis      String // на какво основание е автоматичният достъп (API, условия)
+  httpStatus       Int
+  fetchedAt        DateTime
+  contentHash      String
+  text             String
+  charCount        Int
+  createdAt        DateTime  @default(now())
+
+  source Source                 @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  chunks SourceChunk[]
+  items  PipelineItemDocument[]
+
+  @@unique([provider, externalId, contentHash])
+  @@index([sourceId])
+}
+
+/**
+ * Откъс от извлечения текст — единица за цитиране и проверка.
+ */
+model SourceChunk {
+  id         String  @id @default(cuid())
+  documentId String
+  index      Int
+  heading    String?
+  text       String
+
+  document SourceDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, index])
+}
+
+model PipelineItemDocument {
+  itemId     String
+  documentId String
+  rank       Int // 1 = основен източник
+  score      Float?
+
+  item     PipelineItem   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  document SourceDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, documentId])
+}
+
+/**
+ * Опашка със задачи (PostgreSQL, FOR UPDATE SKIP LOCKED) — без външна услуга.
+ */
+model PipelineJob {
+  id          String            @id @default(cuid())
+  itemId      String
+  kind        PipelineJobKind
+  status      PipelineJobStatus @default(QUEUED)
+  attempts    Int               @default(0)
+  maxAttempts Int               @default(4)
+  runAfter    DateTime          @default(now())
+  lockedAt    DateTime?
+  lockedBy    String?
+  lastError   String?
+  finishedAt  DateTime?
+  createdAt   DateTime          @default(now())
+
+  item PipelineItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([status, runAfter])
+  @@index([itemId])
+}
+
+model PipelineEvent {
+  id        String           @id @default(cuid())
+  itemId    String
+  level     PipelineLogLevel @default(INFO)
+  stage     String
+  message   String
+  data      Json?
+  createdAt DateTime         @default(now())
+
+  item PipelineItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId, createdAt])
+}
+
+model PipelineCheck {
+  id        String              @id @default(cuid())
+  itemId    String
+  kind      String
+  result    PipelineCheckResult
+  message   String
+  details   Json?
+  createdAt DateTime            @default(now())
+
+  item PipelineItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
 }

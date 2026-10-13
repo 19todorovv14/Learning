@@ -18,10 +18,11 @@ export default async function EditLessonPage({ params, searchParams }: PageProps
   const data = await loadLessonSource(id);
   if (!data) notFound();
   const { lesson, md } = data;
-  const [revisions, reviews, reports] = await Promise.all([
+  const [revisions, reviews, reports, pipelineItem] = await Promise.all([
     db.lessonRevision.findMany({ where: { lessonId: id }, orderBy: { version: "desc" }, take: 20, include: { createdBy: { select: { displayName: true } } } }),
     db.contentReview.findMany({ where: { lessonId: id }, orderBy: { createdAt: "desc" }, take: 20, include: { reviewer: { select: { displayName: true } } } }),
     db.contentReport.findMany({ where: { lessonId: id, resolvedAt: null }, orderBy: { createdAt: "desc" } }),
+    db.pipelineItem.findFirst({ where: { lessonId: id }, orderBy: { createdAt: "desc" }, select: { id: true, stage: true } }),
   ]);
   const canReview = hasRole(user, "EDITOR");
 
@@ -42,6 +43,15 @@ export default async function EditLessonPage({ params, searchParams }: PageProps
         </div>
         {sp.restored && <Alert kind="success" className="mb-4">Възстановена е версия {String(sp.restored)} (като нова версия).</Alert>}
         {sp.saved && <Alert kind="success" className="mb-4">Урокът е създаден.</Alert>}
+        {pipelineItem && (
+          <Alert kind="info" className="mb-4">
+            Урокът е от pipeline-а за съдържание и е свързан с извлечените източници. След редакция отворете{" "}
+            <Link href={`/admin/pipeline/${pipelineItem.id}`} className="font-medium underline">
+              задачата в pipeline-а
+            </Link>{" "}
+            и натиснете „Провери отново“ — публикува се само след успешни проверки и одобрение от редактор.
+          </Alert>
+        )}
         {lesson.sourceFile && (
           <Alert kind="info" className="mb-4">
             Урокът идва от файла <code>{lesson.sourceFile}</code>. Редакциите тук се пазят в базата; при следващ импорт файлът няма

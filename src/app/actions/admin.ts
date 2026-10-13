@@ -8,6 +8,7 @@ import { requireRole } from "@/lib/auth/guards";
 import { audit } from "@/lib/audit";
 import { ContentError, parseLessonFile } from "@/lib/content/parse-lesson";
 import { saveParsedLesson, SaveLessonError } from "@/lib/content/save-lesson";
+import { changeLessonStatus, LessonStatusError } from "@/lib/content/lesson-status";
 import type { ContentStatus, Role } from "@/generated/prisma/enums";
 
 export async function saveLessonSourceAction(_: unknown, fd: FormData) {
@@ -47,15 +48,13 @@ export async function setLessonStatusAction(fd: FormData) {
   const id = String(fd.get("id"));
   const to = z.enum(STATUSES).parse(fd.get("status"));
   const comment = String(fd.get("comment") ?? "").slice(0, 2000) || null;
-  const lesson = await db.lesson.findUniqueOrThrow({ where: { id } });
-  await db.$transaction([
-    db.lesson.update({
-      where: { id },
-      data: { status: to, editedInAdminAt: new Date(), ...(to === "PUBLISHED" || to === "VERIFIED" ? { publishedAt: lesson.publishedAt ?? new Date() } : {}) },
-    }),
-    db.question.updateMany({ where: { lessonId: id, externalKey: { not: null } }, data: { status: to } }),
-    db.contentReview.create({ data: { lessonId: id, reviewerId: user.id, fromStatus: lesson.status, toStatus: to as ContentStatus, comment } }),
-  ]);
+  let lesson;
+  try {
+    lesson = await changeLessonStatus(db, user.id, id, to as ContentStatus, comment);
+  } catch (e) {
+    if (e instanceof LessonStatusError && e.pipelineItemId) redirect(`/admin/pipeline/${e.pipelineItemId}?blocked=1`);
+    throw e;
+  }
   await audit(user.id, "lesson.status", "Lesson", id, { from: lesson.status, to });
   revalidatePath("/admin/review");
   revalidatePath(`/admin/lessons/${id}`);

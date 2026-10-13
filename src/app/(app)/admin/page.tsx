@@ -28,7 +28,8 @@ export default async function AdminHome() {
   const missing = [
     !isEmailConfigured() && "SMTP_HOST — без него писмата за потвърждение и смяна на парола не се изпращат.",
     !process.env.CRON_SECRET && "CRON_SECRET — без него напомнянията по имейл (/api/cron/reminders) са изключени.",
-    !isAIConfigured() && "ANTHROPIC_API_KEY — без него AI учителят и AI тестовете са изключени.",
+    !isAIConfigured() && "ANTHROPIC_API_KEY — без него AI учителят, AI тестовете и генерирането на уроци в pipeline-а са изключени.",
+    !process.env.PIPELINE_CONTACT_EMAIL && "PIPELINE_CONTACT_EMAIL — контакт в User-Agent при автоматичното извличане от Уикипедия (изискване на Wikimedia).",
     !process.env.APP_URL && "APP_URL — линковете в имейлите няма да сочат към правилния адрес.",
   ].filter((x): x is string => !!x);
   return (
