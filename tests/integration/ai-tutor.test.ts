@@ -113,8 +113,12 @@ describe.skipIf(!hasDb)("AI учител — сървърен път с Anthropi
     expect(r.body.model).toBe("claude-opus-5-5");
     expect(r.body.fallbacks).toBe("default");
     expect(r.body.stream).toBe(true);
-    const system = r.body.system as { cache_control?: unknown }[];
+    const system = r.body.system as { cache_control?: unknown; text?: string }[];
     expect(system[0].cache_control).toEqual({ type: "ephemeral" });
+    // „Първо библиотеката“: без отворен урок учителят получава намерения урок от BG LEARN и линк към него
+    const systemText = system.map((b) => b.text ?? "").join("\n");
+    expect(systemText).toMatch(/В библиотеката на BG LEARN има урок по този въпрос: „[^“]*Питагор/);
+    expect(systemText).toContain("](/lessons/");
   });
 
   it("грешка от API: разбираемо съобщение, запис ERROR, не изяжда дневния лимит", async () => {

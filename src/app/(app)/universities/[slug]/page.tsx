@@ -70,13 +70,26 @@ export default async function UniversityPage({ params, searchParams }: PageProps
 
       <Alert kind="info" className="mb-6" title="Кандидатстване">
         Условията за прием (изпити, балообразуване, срокове) се определят всяка година от висшето училище. Не публикуваме
-        непроверени изисквания — виж кандидатстудентската страница на{" "}
-        {uni.website ? (
-          <a href={uni.website} target="_blank" rel="noopener noreferrer" className="underline">
-            официалния сайт
-          </a>
+        непроверени изисквания —{" "}
+        {uni.admissionUrl ? (
+          <>
+            виж{" "}
+            <a href={uni.admissionUrl} target="_blank" rel="noopener noreferrer" className="underline">
+              официалната страница за кандидатстване
+            </a>
+            {uni.admissionCheckedAt ? ` (адресът е проверен на ${formatDate(uni.admissionCheckedAt)})` : ""}
+          </>
         ) : (
-          "официалния сайт"
+          <>
+            виж кандидатстудентската страница на{" "}
+            {uni.website ? (
+              <a href={uni.website} target="_blank" rel="noopener noreferrer" className="underline">
+                официалния сайт
+              </a>
+            ) : (
+              "официалния сайт"
+            )}
+          </>
         )}
         . За подготовка използвай курсовете в раздел{" "}
         <Link href="/admission" className="underline">

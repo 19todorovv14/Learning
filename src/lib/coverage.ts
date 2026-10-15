@@ -137,9 +137,20 @@ type CvRow = {
   subjectCategory: string;
   topics: number;
   coveredTopics: number;
+  /** теми с урок, който има обяснение, записки, упражнения или въпроси от учителя и ≥ 3 тестови въпроса */
+  completeTopics: number;
+  topicsWithExercises: number;
+  topicsWithTests: number;
+  approvedTopics: number;
   lessons: number;
   verifiedLessons: number;
 };
+
+/**
+ * Кога темата е „пълна“: има урок (не чернова) с обяснение и записки поне MIN_BODY знака,
+ * упражнения или въпроси от учителя и поне 3 тестови въпроса. Самата тема или заглавие не се броят.
+ */
+export const MIN_BODY_CHARS = 3000;
 
 export type CurriculumCoverage = CvRow & { status: CoverageStatus };
 
@@ -149,13 +160,73 @@ function cvStatus(c: CvRow): CoverageStatus {
   return "PARTIAL";
 }
 
+export type Metrics = {
+  topics: number;
+  coveredTopics: number;
+  completeTopics: number;
+  topicsWithExercises: number;
+  topicsWithTests: number;
+  approvedTopics: number;
+  verifiedLessons: number;
+};
+
+export function sumMetrics(list: Metrics[]): Metrics {
+  const sum = (k: keyof Metrics) => list.reduce((a, c) => a + c[k], 0);
+  return {
+    topics: sum("topics"),
+    coveredTopics: sum("coveredTopics"),
+    completeTopics: sum("completeTopics"),
+    topicsWithExercises: sum("topicsWithExercises"),
+    topicsWithTests: sum("topicsWithTests"),
+    approvedTopics: sum("approvedTopics"),
+    verifiedLessons: sum("verifiedLessons"),
+  };
+}
+
+export const pct = (part: number, total: number) => (total ? Math.round((part / total) * 100) : 0);
+
+export const TRACK_LABEL: Record<string, string> = {
+  SCHOOL: "Училище (1.–12. клас)",
+  ADMISSION: "Изпити: НВО, ДЗИ, кандидатстване",
+  LANGUAGE: "Чужди езици (по нива)",
+  VOCATIONAL: "Професионално образование",
+  UNIVERSITY: "Университетски курсове",
+  DRIVING: "Шофьорски изпит",
+  FIRST_AID: "Първа помощ и спасители",
+  OTHER: "Други",
+};
+
 export async function computeCoverage(db: PrismaClient) {
   const cvRows = await db.$queryRaw<CvRow[]>`
+    WITH lesson_stats AS (
+      SELECT l.id, l.status,
+        (SELECT coalesce(sum(length(ls.body)), 0) FROM "LessonSection" ls WHERE ls."lessonId" = l.id) AS body,
+        (SELECT count(*) FROM "Exercise" e WHERE e."lessonId" = l.id) AS exercises,
+        (SELECT count(*) FROM "LessonQA" q WHERE q."lessonId" = l.id) AS qa,
+        (SELECT count(*) FROM "Question" q WHERE q."lessonId" = l.id AND q.origin <> 'AI_GENERATED') AS questions
+      FROM "Lesson" l WHERE l.status <> 'DRAFT'
+    ),
+    topic_stats AS (
+      SELECT t.id AS "topicId", cs."curriculumVersionId" AS cv,
+        bool_or(ls.id IS NOT NULL) AS has_lesson,
+        bool_or(ls.body >= ${MIN_BODY_CHARS} AND (ls.exercises > 0 OR ls.qa > 0) AND ls.questions >= 3) AS complete,
+        bool_or(ls.exercises > 0) AS has_ex,
+        bool_or(ls.questions >= 3) AS has_test,
+        bool_or(ls.status IN ('VERIFIED','PUBLISHED')) AS approved
+      FROM "CurriculumTopic" t
+      JOIN "CurriculumSection" cs ON cs.id = t."sectionId"
+      LEFT JOIN "TopicLesson" tl ON tl."topicId" = t.id
+      LEFT JOIN lesson_stats ls ON ls.id = tl."lessonId"
+      GROUP BY t.id, cs."curriculumVersionId"
+    )
     SELECT cv.slug, cv.title, cv.track::text AS track, cv."gradeId", cv."gradeTo", cv.variant, cv."isOfficialStructure",
       s.slug AS "subjectSlug", s.name AS "subjectName", s.category::text AS "subjectCategory",
-      (SELECT count(*)::int FROM "CurriculumTopic" t JOIN "CurriculumSection" cs ON cs.id = t."sectionId" WHERE cs."curriculumVersionId" = cv.id) AS topics,
-      (SELECT count(DISTINCT tl."topicId")::int FROM "TopicLesson" tl JOIN "CurriculumTopic" t ON t.id = tl."topicId"
-         JOIN "CurriculumSection" cs ON cs.id = t."sectionId" WHERE cs."curriculumVersionId" = cv.id) AS "coveredTopics",
+      (SELECT count(*)::int FROM topic_stats ts WHERE ts.cv = cv.id) AS topics,
+      (SELECT count(*)::int FROM topic_stats ts WHERE ts.cv = cv.id AND ts.has_lesson) AS "coveredTopics",
+      (SELECT count(*)::int FROM topic_stats ts WHERE ts.cv = cv.id AND ts.complete) AS "completeTopics",
+      (SELECT count(*)::int FROM topic_stats ts WHERE ts.cv = cv.id AND ts.has_ex) AS "topicsWithExercises",
+      (SELECT count(*)::int FROM topic_stats ts WHERE ts.cv = cv.id AND ts.has_test) AS "topicsWithTests",
+      (SELECT count(*)::int FROM topic_stats ts WHERE ts.cv = cv.id AND ts.approved) AS "approvedTopics",
       (SELECT count(*)::int FROM "Lesson" l WHERE l."curriculumVersionId" = cv.id) AS lessons,
       (SELECT count(*)::int FROM "Lesson" l WHERE l."curriculumVersionId" = cv.id AND l.status IN ('VERIFIED','PUBLISHED')) AS "verifiedLessons"
     FROM "CurriculumVersion" cv JOIN "Subject" s ON s.id = cv."subjectId"
@@ -167,13 +238,7 @@ export async function computeCoverage(db: PrismaClient) {
 
   const grades = Array.from({ length: 12 }, (_, i) => i + 1).map((g) => {
     const list = school.filter((c) => covers(c, g));
-    return {
-      grade: g,
-      curricula: list,
-      topics: list.reduce((a, c) => a + c.topics, 0),
-      coveredTopics: list.reduce((a, c) => a + c.coveredTopics, 0),
-      verifiedLessons: list.reduce((a, c) => a + c.verifiedLessons, 0),
-    };
+    return { grade: g, curricula: list, ...sumMetrics(list) };
   });
 
   const stages = EXPECTED_STAGES.map((st) => ({
@@ -297,8 +362,16 @@ export async function computeCoverage(db: PrismaClient) {
     },
   ];
 
+  const tracks = Object.keys(TRACK_LABEL)
+    .map((track) => {
+      const list = curricula.filter((c) => c.track === track);
+      return { track, label: TRACK_LABEL[track], curricula: list, ...sumMetrics(list) };
+    })
+    .filter((t) => t.curricula.length > 0);
+
   return {
     generatedAt: new Date(),
+    tracks,
     monSource: src("mon"),
     grades,
     stages,
@@ -311,7 +384,11 @@ export async function computeCoverage(db: PrismaClient) {
       pending: lessonCount(["PENDING_REVIEW", "AI_GENERATED"]),
       draft: lessonCount(["DRAFT"]),
     },
-    schoolTopics: { total: school.reduce((a, c) => a + c.topics, 0), covered: school.reduce((a, c) => a + c.coveredTopics, 0) },
+    schoolTopics: {
+      total: school.reduce((a, c) => a + c.topics, 0),
+      covered: school.reduce((a, c) => a + c.coveredTopics, 0),
+      complete: school.reduce((a, c) => a + c.completeTopics, 0),
+    },
     officialStructures: curricula.filter((c) => c.isOfficialStructure).length,
     curriculaTotal: curricula.length,
   };
@@ -334,7 +411,7 @@ export function coverageMarkdown(c: Coverage) {
   L.push("Легенда: ✅ потвърдено от официален източник · 🟡 внесено, чака сверка/проверка · 🟠 частично · ❌ липсва", "");
   L.push("## Обобщение", "");
   L.push(`- Уроци: **${c.lessons.total}**, от тях **проверени от редактор: ${c.lessons.verified}**, чакат проверка: ${c.lessons.pending}, чернови: ${c.lessons.draft}.`);
-  L.push(`- Училищни теми с урок: **${c.schoolTopics.covered} от ${c.schoolTopics.total}**.`);
+  L.push(`- Училищни теми с урок: **${c.schoolTopics.covered} от ${c.schoolTopics.total}**, от тях пълни (урок + упражнения + тест): **${c.schoolTopics.complete}**.`);
   L.push(
     `- Учебни програми (структури): ${c.curriculaTotal}; сверени с официалната програма: **${c.officialStructures}**. Източникът „МОН — учебни програми“ е ${
       c.monSource?.freshness === "CURRENT" ? "проверен" : "НЕПРОВЕРЕН (mon.bg отказва автоматичен достъп)"
@@ -343,8 +420,30 @@ export function coverageMarkdown(c: Coverage) {
   );
   L.push("## Институции и регистри", "", "| Област | Статус | Данни | Бележка |", "|---|---|---|---|");
   for (const i of c.institutions) L.push(`| ${i.name} | ${ICON[i.status]} ${COVERAGE_LABEL[i.status]} | ${i.value} | ${i.note} |`);
-  L.push("", "## Училищно образование по класове (от базата)", "", "| Клас | Програми | Теми | Теми с урок | Проверени уроци |", "|---|---|---|---|---|");
-  for (const g of c.grades) L.push(`| ${g.grade} | ${g.curricula.map(curriculumLabel).join(", ") || "—"} | ${g.topics} | ${g.coveredTopics} | ${g.verifiedLessons} |`);
+  L.push(
+    "",
+    "## Училищно образование по класове (от базата)",
+    "",
+    `„Пълна“ тема = урок (не чернова) с обяснение и записки ≥ ${MIN_BODY_CHARS} знака, упражнения или въпроси от учителя и ≥ 3 тестови въпроса.`,
+    "",
+    "| Клас | Програми | Теми | С урок | Пълни | % пълни | С упражнения | С тест | Одобрени |",
+    "|---|---|---|---|---|---|---|---|---|",
+  );
+  for (const g of c.grades)
+    L.push(
+      `| ${g.grade} | ${g.curricula.map(curriculumLabel).join(", ") || "—"} | ${g.topics} | ${g.coveredTopics} | ${g.completeTopics} | ${pct(g.completeTopics, g.topics)}% | ${g.topicsWithExercises} | ${g.topicsWithTests} | ${g.approvedTopics} |`,
+    );
+  L.push("", "## По направления и програми", "");
+  for (const t of c.tracks) {
+    L.push(
+      `### ${t.label} — ${t.completeTopics}/${t.topics} пълни теми (${pct(t.completeTopics, t.topics)}%), одобрени ${t.approvedTopics}`,
+      "",
+      "| Програма | Теми | С урок | Пълни | С тест | Одобрени |",
+      "|---|---|---|---|---|---|",
+    );
+    for (const cv of t.curricula) L.push(`| ${cv.title} | ${cv.topics} | ${cv.coveredTopics} | ${cv.completeTopics} | ${cv.topicsWithTests} | ${cv.approvedTopics} |`);
+    L.push("");
+  }
   L.push("", "## Очаквани предмети по етапи — ЧАКА СВЕРКА", "");
   L.push(
     "Списъкът е съставен ръчно по Наредба № 4 от 30.11.2015 г. за учебния план (с измененията) — официалният текст на mon.bg не позволява автоматично изтегляне, затова **трябва да се свери** преди да се използва като меродавен.",

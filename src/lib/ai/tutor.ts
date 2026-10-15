@@ -8,6 +8,7 @@ import { logError } from "@/lib/audit";
 import { aiConfig } from "./config";
 import { FALLBACK_BETA, getAnthropicClient, monthSpentMicroUsd, recordAIUsage } from "./client";
 import { learnerContextBlock, lessonContextBlock, TUTOR_SYSTEM_PROMPT, type LearnerContext } from "./prompts";
+import { findLessonForQuestion } from "@/lib/search/search";
 
 const getClient = getAnthropicClient;
 
@@ -91,6 +92,13 @@ export async function getLessonContext(lessonId: string) {
   return { title: l.title, subject: l.subject.name, course: l.curriculumVersion.title, grade: l.gradeId, text };
 }
 
+/** Инструкция към модела дали въпросът има урок в библиотеката — така учителят не се представя за библиотеката. */
+export function libraryNotice(found: { slug: string; title: string } | null) {
+  return found
+    ? `В библиотеката на BG LEARN има урок по този въпрос: „${found.title}“ (/lessons/${found.slug}). Основавай обяснението на него и в края насочи ученика към урока с линк [${found.title}](/lessons/${found.slug}).`
+    : "В библиотеката на BG LEARN няма намерен урок по този въпрос. Ако въпросът е учебен, кажи това ясно с едно изречение в началото и уточни, че обяснението ти е допълнително — не е проверен урок от библиотеката. Ако съобщението не е учебен въпрос (поздрав, благодарност), не споменавай библиотеката.";
+}
+
 export type TutorImage = { mediaType: "image/png" | "image/jpeg" | "image/webp" | "image/gif"; data: string };
 
 export type TutorRequest = {
@@ -117,9 +125,15 @@ export function streamTutorReply(req: TutorRequest): ReadableStream<Uint8Array> 
       const send = (e: StreamEvent) => controller.enqueue(enc.encode(JSON.stringify(e) + "\n"));
       let text = "";
       try {
+        const learnerPromise = getLearnerContext(req.userId);
+        // „Първо библиотеката“: без отворен урок търсим подходящ урок в BG LEARN по въпроса.
+        const found =
+          !req.lessonId && req.userMessage.trim().length >= 12
+            ? await findLessonForQuestion(`${req.topicHint ?? ""} ${req.userMessage}`.trim(), (await learnerPromise).grade ?? null).catch(() => null)
+            : null;
         const [learner, lesson, history] = await Promise.all([
-          getLearnerContext(req.userId),
-          req.lessonId ? getLessonContext(req.lessonId) : null,
+          learnerPromise,
+          req.lessonId ? getLessonContext(req.lessonId) : found ? getLessonContext(found.id) : null,
           db.aIMessage.findMany({
             where: { conversationId: req.conversationId },
             orderBy: { createdAt: "desc" },
@@ -131,6 +145,7 @@ export function streamTutorReply(req: TutorRequest): ReadableStream<Uint8Array> 
           { type: "text", text: TUTOR_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
         ];
         if (lesson) system.push({ type: "text", text: lessonContextBlock(lesson), cache_control: { type: "ephemeral" } });
+        if (!req.lessonId) system.push({ type: "text", text: libraryNotice(found) });
         system.push({
           type: "text",
           text: learnerContextBlock(learner) + (req.topicHint ? `\n\nТема, по която ученикът пита: ${req.topicHint}` : ""),

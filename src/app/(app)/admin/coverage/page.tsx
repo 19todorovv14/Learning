@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { requireRolePage } from "@/lib/auth/guards";
 import { db } from "@/lib/db";
-import { computeCoverage, COVERAGE_LABEL, curriculumLabel, type CoverageStatus } from "@/lib/coverage";
+import { computeCoverage, COVERAGE_LABEL, curriculumLabel, MIN_BODY_CHARS, pct, type CoverageStatus } from "@/lib/coverage";
 import { formatDateTime } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Покритие · Админ" };
@@ -55,9 +55,9 @@ export default async function CoveragePage() {
         </div>
         <div className="card p-4">
           <div className="text-2xl font-semibold">
-            {c.schoolTopics.covered}/{c.schoolTopics.total}
+            {c.schoolTopics.complete}/{c.schoolTopics.total}
           </div>
-          <div className="text-xs text-muted">училищни теми с урок</div>
+          <div className="text-xs text-muted">училищни теми с пълен урок ({c.schoolTopics.covered} с какъвто и да е урок)</div>
         </div>
         <div className="card p-4">
           <div className="text-2xl font-semibold">
@@ -76,30 +76,82 @@ export default async function CoveragePage() {
         <Table rows={c.institutions} />
       </div>
 
-      <h2 className="section-title mb-2">Училищно образование по класове</h2>
+      <h2 className="section-title mb-1">Училищно образование по класове</h2>
+      <p className="mb-2 text-xs text-muted">
+        „Пълна“ тема = урок (не чернова) с обяснение и записки ≥ {MIN_BODY_CHARS} знака, упражнения или въпроси от учителя и ≥ 3 тестови
+        въпроса. Само заглавие на тема не се брои.
+      </p>
       <div className="card mb-8 overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-surface-2 text-left text-text-2">
             <tr>
               <th className="px-3 py-2 font-medium">Клас</th>
+              <th className="px-3 py-2 font-medium">Теми</th>
+              <th className="px-3 py-2 font-medium">С урок</th>
+              <th className="px-3 py-2 font-medium">Пълни</th>
+              <th className="px-3 py-2 font-medium">С упражнения</th>
+              <th className="px-3 py-2 font-medium">С тест</th>
+              <th className="px-3 py-2 font-medium">Одобрени</th>
               <th className="px-3 py-2 font-medium">Програми в базата</th>
-              <th className="px-3 py-2 font-medium">Теми с урок</th>
-              <th className="px-3 py-2 font-medium">Проверени уроци</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {c.grades.map((g) => (
               <tr key={g.grade}>
                 <td className="px-3 py-2">{g.grade}.</td>
-                <td className="px-3 py-2 text-text-2">{g.curricula.map(curriculumLabel).join(", ") || "—"}</td>
+                <td className="px-3 py-2">{g.topics}</td>
+                <td className="px-3 py-2">{g.coveredTopics}</td>
                 <td className="px-3 py-2 whitespace-nowrap">
-                  {g.coveredTopics} / {g.topics}
+                  {g.completeTopics} <span className="text-xs text-muted">({pct(g.completeTopics, g.topics)}%)</span>
                 </td>
-                <td className="px-3 py-2">{g.verifiedLessons}</td>
+                <td className="px-3 py-2">{g.topicsWithExercises}</td>
+                <td className="px-3 py-2">{g.topicsWithTests}</td>
+                <td className="px-3 py-2">{g.approvedTopics}</td>
+                <td className="px-3 py-2 text-xs text-text-2">{g.curricula.map(curriculumLabel).join(", ") || "—"}</td>
               </tr>
             ))}
           </tbody>
         </table>
+      </div>
+
+      <h2 className="section-title mb-2">По направления и програми</h2>
+      <div className="mb-8 space-y-3">
+        {c.tracks.map((t) => (
+          <details key={t.track} className="card p-4" open={t.track === "LANGUAGE"}>
+            <summary className="cursor-pointer text-sm">
+              <span className="font-medium">{t.label}</span>
+              <span className="ml-2 text-muted">
+                {t.completeTopics}/{t.topics} пълни теми ({pct(t.completeTopics, t.topics)}%) · одобрени {t.approvedTopics}
+              </span>
+            </summary>
+            <div className="mt-3 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="text-left text-text-2">
+                  <tr>
+                    <th className="py-1 pr-3 font-medium">Програма</th>
+                    <th className="py-1 pr-3 font-medium">Теми</th>
+                    <th className="py-1 pr-3 font-medium">С урок</th>
+                    <th className="py-1 pr-3 font-medium">Пълни</th>
+                    <th className="py-1 pr-3 font-medium">С тест</th>
+                    <th className="py-1 font-medium">Одобрени</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {t.curricula.map((cv) => (
+                    <tr key={cv.slug}>
+                      <td className="py-1 pr-3">{cv.title}</td>
+                      <td className="py-1 pr-3">{cv.topics}</td>
+                      <td className="py-1 pr-3">{cv.coveredTopics}</td>
+                      <td className="py-1 pr-3">{cv.completeTopics}</td>
+                      <td className="py-1 pr-3">{cv.topicsWithTests}</td>
+                      <td className="py-1">{cv.approvedTopics}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        ))}
       </div>
 
       {c.stages.map((st) => (

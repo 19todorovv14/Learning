@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse as parseYaml } from "yaml";
 import type { PrismaClient } from "@/generated/prisma/client";
@@ -51,6 +51,14 @@ export async function importUniversities(db: PrismaClient, root: string, log: (m
   const meta = parseYaml(readFileSync(join(root, "universities/universities.yaml"), "utf8")) as UniMeta[];
   const metaByName = new Map(meta.map((m) => [m.name, m]));
   const fetchedAt = new Date(data.source.fetchedAt);
+  // Официални страници за прием, проверени отделно (HTTP 200 + robots.txt) — само ако файлът съществува
+  const admissionFile = join(root, "universities/admission-pages.yaml");
+  const admissionPages = new Map(
+    (existsSync(admissionFile) ? ((parseYaml(readFileSync(admissionFile, "utf8")) ?? []) as { slug: string; admissionUrl: string; checked: string }[]) : []).map((a) => [
+      a.slug,
+      a,
+    ]),
+  );
 
   const source = await db.source.upsert({
     where: { url: data.source.url },
@@ -88,6 +96,8 @@ export async function importUniversities(db: PrismaClient, root: string, log: (m
         ownership: m.ownership,
         website: m.website ?? null,
         verifiedAt: m.checked ? fetchedAt : null,
+        admissionUrl: admissionPages.get(m.slug)?.admissionUrl ?? null,
+        admissionCheckedAt: admissionPages.get(m.slug) ? new Date(admissionPages.get(m.slug)!.checked) : null,
         sourceId: source.id,
       },
       update: {
@@ -100,6 +110,8 @@ export async function importUniversities(db: PrismaClient, root: string, log: (m
         ownership: m.ownership,
         website: m.website ?? null,
         verifiedAt: m.checked ? fetchedAt : null,
+        admissionUrl: admissionPages.get(m.slug)?.admissionUrl ?? null,
+        admissionCheckedAt: admissionPages.get(m.slug) ? new Date(admissionPages.get(m.slug)!.checked) : null,
         sourceId: source.id,
       },
     });

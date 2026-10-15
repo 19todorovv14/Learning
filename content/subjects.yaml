@@ -185,6 +185,18 @@
   color: "#A93226"
   icon: languages
   order: 56
+- slug: turski-ezik
+  name: "Турски език"
+  category: FOREIGN_LANGUAGE
+  color: "#C0392B"
+  icon: languages
+  order: 57
+- slug: koreyski-ezik
+  name: "Корейски език"
+  category: FOREIGN_LANGUAGE
+  color: "#2E4053"
+  icon: languages
+  order: 58
 
 # ── Професионално обучение ──
 - slug: avtomobilna-tehnika

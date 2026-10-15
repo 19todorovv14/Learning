@@ -384,22 +384,23 @@ model School {
 }
 
 model University {
-  id           String       @id @default(cuid())
-  slug         String       @unique
-  nacidId      Int?         @unique
-  name         String
-  nameEn       String?
-  shortName    String?
-  city         String
-  type         HigherEdType
-  ownership    Ownership
-  website      String?
-  admissionUrl String?
-  description  String?
-  verifiedAt   DateTime?
-  sourceId     String?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id                 String       @id @default(cuid())
+  slug               String       @unique
+  nacidId            Int?         @unique
+  name               String
+  nameEn             String?
+  shortName          String?
+  city               String
+  type               HigherEdType
+  ownership          Ownership
+  website            String?
+  admissionUrl       String?
+  admissionCheckedAt DateTime? // кога е проверена официалната страница за прием (HTTP 200, robots.txt)
+  description        String?
+  verifiedAt         DateTime?
+  sourceId           String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
 
   source           Source?         @relation(fields: [sourceId], references: [id], onDelete: SetNull)
   faculties        Faculty[]
@@ -886,6 +887,7 @@ model AssessmentAttempt {
   timeLimitSec        Int?
   startedAt           DateTime     @default(now())
   submittedAt         DateTime?
+  submittedLate       Boolean      @default(false) // изпитна симулация, предадена след края на времето (проверка на сървъра)
   score               Float?
   maxScore            Float?
   percent             Float?

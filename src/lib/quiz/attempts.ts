@@ -1,5 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
+import type { Prisma } from "@/generated/prisma/client";
 import { learnerStatuses } from "@/lib/data/visibility";
 import { gradeQuestion, seededShuffle, type QuestionForGrading, type QuizResponse } from "./grading";
 import type { AttemptMode, AttemptScope } from "@/generated/prisma/enums";
@@ -15,6 +16,20 @@ export type StartInput = {
 };
 
 export class QuizError extends Error {}
+
+/**
+ * Въпросите за тест по програма: от уроците на програмата и от уроците, свързани с нейните теми
+ * (напр. уроци от 7. клас към НВО 7). Без отворени въпроси, чернови и AI въпроси на отделни ученици.
+ */
+export function curriculumQuestionsWhere(curriculumId: string): Prisma.QuestionWhereInput {
+  return {
+    type: { not: "OPEN" },
+    status: { not: "DRAFT" },
+    origin: { not: "AI_GENERATED" },
+    lesson: { status: { in: learnerStatuses() } },
+    OR: [{ curriculumVersionId: curriculumId }, { lesson: { topics: { some: { topic: { section: { curriculumVersionId: curriculumId } } } } } }],
+  };
+}
 
 export async function startAttempt(input: StartInput) {
   const statuses = learnerStatuses();
@@ -36,10 +51,7 @@ export async function startAttempt(input: StartInput) {
   } else if (input.scope === "CURRICULUM") {
     const cv = await db.curriculumVersion.findUnique({ where: { id: input.curriculumId }, select: { id: true, title: true } });
     if (!cv) throw new QuizError("Курсът не е намерен.");
-    const qs = await db.question.findMany({
-      where: { curriculumVersionId: cv.id, type: { not: "OPEN" }, status: { not: "DRAFT" }, lesson: { status: { in: statuses } } },
-      select: { id: true },
-    });
+    const qs = await db.question.findMany({ where: curriculumQuestionsWhere(cv.id), select: { id: true } });
     questionIds = seededShuffle(qs.map((q) => q.id), seed).slice(0, Math.min(input.count ?? 20, 40));
     title = `Тест по курса: ${cv.title}`;
   } else if (input.scope === "DRIVING") {
@@ -168,9 +180,11 @@ export async function submitAttempt(userId: string, attemptId: string, responses
         },
       });
     }
+    // Времето се проверява и на сървъра: изпитна симулация, предадена след края на времето (+60 s толеранс), се отбелязва.
+    const late = attempt.mode === "EXAM" && !!attempt.timeLimitSec && now.getTime() > attempt.startedAt.getTime() + (attempt.timeLimitSec + 60) * 1000;
     await tx.assessmentAttempt.update({
       where: { id: attemptId },
-      data: { submittedAt: now, score, maxScore: max, percent },
+      data: { submittedAt: now, score, maxScore: max, percent, submittedLate: late },
     });
     const durationSec = Math.min(4 * 3600, Math.round((now.getTime() - attempt.startedAt.getTime()) / 1000));
     await tx.studySession.create({

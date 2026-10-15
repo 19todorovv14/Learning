@@ -76,6 +76,8 @@ export async function importContent(
       type: s.type,
       verificationNote: s.note ?? null,
       relatedTo: s.relatedTo ?? null,
+      license: s.license ?? null,
+      licenseUrl: s.licenseUrl ?? null,
       ...(s.verified ? { verifiedAt: new Date(s.verified), freshness: "CURRENT" as const, lastHttpStatus: 200 } : {}),
     };
     const existing = await db.source.findFirst({ where: { OR: [{ key: s.key }, { url: s.url }] } });

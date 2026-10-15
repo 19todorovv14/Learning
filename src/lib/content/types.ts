@@ -171,6 +171,9 @@ export const sourceSchema = z
     relatedTo: z.string().optional(),
     /** дата (YYYY-MM-DD), на която адресът е проверен ръчно или автоматично */
     verified: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    /** лиценз на материала, напр. „Обществено достояние“ или „CC BY-SA 4.0“ */
+    license: z.string().optional(),
+    licenseUrl: z.string().url().optional(),
   })
   .strict();
 export type SourceFile = z.infer<typeof sourceSchema>;

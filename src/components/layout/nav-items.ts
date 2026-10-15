@@ -18,6 +18,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     title: "Изпити и пътища",
     items: [
+      { href: "/exams", label: "Подготовка за изпити", icon: "clipboard" },
       { href: "/admission", label: "Кандидатстване", icon: "target" },
       { href: "/universities", label: "Университети", icon: "landmark" },
       { href: "/vocational", label: "Професионално обучение", icon: "wrench" },

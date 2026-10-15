@@ -86,4 +86,20 @@ describe.skipIf(!hasDb)("тестове и прогрес (интеграцио�
     expect(attempt.timeLimitSec).toBeGreaterThan(0);
     await expect(submitAttempt("друг-потребител", attempt.id, {})).rejects.toThrow(/не е намерен/);
   });
+
+  it("тест по програмата за НВО включва въпросите от свързаните уроци; закъсняла симулация се отбелязва", async () => {
+    const nvo = await db.curriculumVersion.findUniqueOrThrow({ where: { slug: "matematika-nvo-7" } });
+    const attempt = await startAttempt({ userId: user.id, scope: "CURRICULUM", mode: "EXAM", curriculumId: nvo.id, count: 40 });
+    const qs = await db.question.findMany({ where: { id: { in: attempt.questionIds } }, select: { curriculumVersionId: true } });
+    expect(qs.some((q) => q.curriculumVersionId !== nvo.id)).toBe(true); // напр. урокът по формули от 7. клас
+    expect(attempt.timeLimitSec).toBeGreaterThan(0);
+
+    // симулацията е започнала преди повече време от лимита → сървърът отбелязва закъснението
+    await db.assessmentAttempt.update({ where: { id: attempt.id }, data: { startedAt: new Date(Date.now() - (attempt.timeLimitSec! + 120) * 1000) } });
+    const late = await submitAttempt(user.id, attempt.id, {});
+    expect(late.submittedLate).toBe(true);
+
+    const onTime = await startAttempt({ userId: user.id, scope: "CURRICULUM", mode: "EXAM", curriculumId: nvo.id, count: 5 });
+    expect((await submitAttempt(user.id, onTime.id, {})).submittedLate).toBe(false);
+  });
 });

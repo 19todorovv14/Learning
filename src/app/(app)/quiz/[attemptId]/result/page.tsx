@@ -57,8 +57,13 @@ export default async function ResultPage({ params }: PageProps<"/quiz/[attemptId
       <PageHeader
         crumbs={[{ href: "/quizzes", label: "Тестове" }, { label: "Резултат" }]}
         title={attempt.title}
-        description={`${attempt.mode === "EXAM" ? "Изпит" : "Упражнение"} · ${formatDateTime(attempt.submittedAt)} · ${formatDuration(duration)}`}
+        description={`${attempt.mode === "EXAM" ? "Изпитна симулация" : "Упражнение"} · ${formatDateTime(attempt.submittedAt)} · ${formatDuration(duration)}`}
       />
+      {attempt.submittedLate && (
+        <p className="mb-4 rounded-lg bg-warning-soft px-4 py-3 text-sm text-warning" role="status">
+          Тестът е предаден след края на времето. Резултатът е изчислен, но не отговаря на условията на изпитна симулация.
+        </p>
+      )}
 
       <div className="card mb-8 flex flex-col items-center gap-6 p-6 sm:flex-row">
         <div

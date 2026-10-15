@@ -47,6 +47,20 @@ async function searchLessons(p: ParsedQuery, useSubject: boolean, useGrade: bool
   `;
 }
 
+/**
+ * Най-подходящият урок от библиотеката за въпрос на ученика (за AI учителя: „първо библиотеката“).
+ * Търси първо в класа на ученика, после навсякъде; връща null, ако няма достатъчно близък урок.
+ */
+export async function findLessonForQuestion(question: string, grade: number | null): Promise<LessonHit | null> {
+  const p = parseSearchQuery(question);
+  if (!p.raw || p.raw.length < 4) return null;
+  const withGrade = { ...p, grade: p.grade ?? grade };
+  let hits = await searchLessons(withGrade, !!p.subjectSlug, !!withGrade.grade);
+  if (!hits.length) hits = await searchLessons(p, false, false);
+  const top = hits[0];
+  return top && top.rank >= 0.15 ? top : null;
+}
+
 export async function globalSearch(raw: string) {
   const p = parseSearchQuery(raw);
   if (!p.raw) return null;
